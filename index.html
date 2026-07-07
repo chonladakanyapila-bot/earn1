@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>เกมตีตัวตุ่น แม่ ก กา - สื่อการเรียนรู้วิทยาศาสตร์และภาษาไทย</title>
+  <title>ความลับระบบย่อยอาหาร - เกมการศึกษาระบบ AR และการโต้ตอบ</title>
   
   <!-- Google Fonts: Kanit -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,10 +13,10 @@
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <!-- Font Awesome for Icons -->
+  <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-  <!-- MediaPipe Hands CDN -->
+  <!-- MediaPipe Hands CDNs -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
@@ -28,15 +28,12 @@
             kanit: ['Kanit', 'sans-serif'],
           },
           colors: {
-            sky: {
-              light: '#e0f2fe',
-              DEFAULT: '#38bdf8',
-              dark: '#0284c7',
-            },
-            grass: {
-              light: '#4ade80',
-              DEFAULT: '#22c55e',
-              dark: '#15803d',
+            organ: {
+              mouth: '#f43f5e',
+              esophagus: '#fb923c',
+              stomach: '#fbbf24',
+              small: '#34d399',
+              large: '#60a5fa'
             }
           }
         }
@@ -51,501 +48,381 @@
       user-select: none;
       -webkit-user-select: none;
     }
-    
-    /* Custom 3D wooden boards */
-    .wooden-board {
-      background: linear-gradient(135deg, #854d0e 0%, #a16207 100%);
-      border: 4px solid #451a03;
-      box-shadow: 0 8px 0 #451a03, 0 15px 20px rgba(0,0,0,0.3);
-      text-shadow: 2px 2px 0px #451a03;
+
+    /* 3D Premium Cartoon UI Elements */
+    .game-panel {
+      background: rgba(255, 255, 255, 0.95);
+      border: 4px solid #f0fdf4;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04), inset 0 -4px 0 #e2e8f0;
     }
 
-    .wooden-btn {
-      background: linear-gradient(to bottom, #ea580c 0%, #c2410c 100%);
-      border: 3px solid #431407;
-      box-shadow: 0 6px 0 #431407, 0 10px 15px rgba(0,0,0,0.3);
+    .btn-cartoon {
+      background: linear-gradient(to bottom, #10b981 0%, #059669 100%);
+      border: 3px solid #047857;
+      box-shadow: 0 6px 0 #047857, 0 10px 15px rgba(0, 0, 0, 0.15);
       transition: all 0.1s ease;
+      text-shadow: 1px 1px 0px #047857;
     }
 
-    .wooden-btn:active {
+    .btn-cartoon:active {
       transform: translateY(4px);
-      box-shadow: 0 2px 0 #431407, 0 5px 10px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 0 #047857, 0 5px 10px rgba(0, 0, 0, 0.15);
     }
 
-    /* Grass field perspective */
-    .game-field {
-      perspective: 1000px;
+    .btn-orange {
+      background: linear-gradient(to bottom, #f97316 0%, #ea580c 100%);
+      border: 3px solid #9a3412;
+      box-shadow: 0 6px 0 #9a3412, 0 10px 15px rgba(0, 0, 0, 0.15);
+      transition: all 0.1s ease;
+      text-shadow: 1px 1px 0px #9a3412;
     }
 
-    .mole-hole {
-      background: radial-gradient(circle, #3f220f 40%, #1c0e06 100%);
-      box-shadow: inset 0 8px 15px rgba(0,0,0,0.6), 0 5px 0px #15803d;
+    .btn-orange:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #9a3412, 0 5px 10px rgba(0, 0, 0, 0.15);
     }
 
-    /* Animations */
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-8px); }
-    }
-    .bounce-ui {
-      animation: bounce 2s infinite ease-in-out;
+    /* Organ glow path */
+    .organ-active {
+      filter: drop-shadow(0 0 12px rgba(239, 68, 68, 0.8));
+      animation: pulsate 1.5s infinite alternate;
     }
 
-    @keyframes pulse-red {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.1); opacity: 0.8; color: #ef4444; }
-    }
-    .pulse-time-limit {
-      animation: pulse-red 0.8s infinite;
+    @keyframes pulsate {
+      0% { transform: scale(1); }
+      100% { transform: scale(1.05); }
     }
 
-    /* Flash feedback */
-    @keyframes score-up {
-      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-      50% { opacity: 1; }
-      100% { transform: translate(-50%, -120px) scale(1.5); opacity: 0; }
-    }
-    .floating-score {
-      animation: score-up 0.8s forwards ease-out;
+    /* Falling nutrients and custom game assets */
+    .particle {
+      transition: transform 0.05s linear;
     }
 
-    /* Hand pointer hammer styling */
-    .hammer-cursor {
+    /* Hand Tracking Cursor */
+    .hand-cursor {
       pointer-events: none;
-      transform-origin: bottom left;
-      transition: transform 0.05s ease;
+      z-index: 100;
+      transition: opacity 0.2s ease;
     }
-    .hammer-strike {
-      transform: rotate(-45deg) scale(1.2) !important;
+
+    /* Standard responsive containers */
+    .ratio-container {
+      aspect-ratio: 16/10;
     }
   </style>
 </head>
-<body class="bg-gradient-to-b from-sky-300 via-sky-100 to-emerald-200 min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
+<body class="bg-gradient-to-b from-sky-100 via-emerald-50 to-amber-100 min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
 
-  <!-- ==================== MAIN GAME CONTAINER ==================== -->
-  <div class="relative w-full max-w-6xl aspect-[16/10] bg-gradient-to-b from-sky-400 to-emerald-400 rounded-3xl overflow-hidden shadow-2xl border-8 border-white/80 flex flex-col justify-between">
+  <!-- ==================== MAIN GAME HUB ==================== -->
+  <div class="relative w-full max-w-6xl ratio-container bg-gradient-to-b from-teal-500 to-emerald-600 rounded-3xl overflow-hidden shadow-2xl border-8 border-white/90 flex flex-col justify-between">
     
-    <!-- BACKGROUND ART (Sky & Clouds) -->
-    <div class="absolute inset-0 z-0 pointer-events-none">
-      <!-- Sun -->
-      <div class="absolute top-6 right-8 w-16 h-16 sm:w-24 sm:h-24 bg-amber-400 rounded-full blur-xs shadow-inner animate-pulse"></div>
-      <!-- Clouds -->
-      <div class="absolute top-10 left-[10%] w-24 h-8 bg-white/70 rounded-full blur-xs animate-bounce" style="animation-duration: 6s;"></div>
-      <div class="absolute top-16 right-[25%] w-32 h-10 bg-white/80 rounded-full blur-xs animate-bounce" style="animation-duration: 8s;"></div>
+    <!-- BACKGROUND GRAPHICS (Dynamic Sky / Biology Grid) -->
+    <div class="absolute inset-0 pointer-events-none z-0">
+      <div class="absolute top-4 left-6 w-32 h-12 bg-white/10 rounded-full blur-md"></div>
+      <div class="absolute bottom-10 right-10 w-48 h-20 bg-emerald-400/20 rounded-full blur-lg"></div>
     </div>
 
     <!-- ==================== 1. START SCREEN ==================== -->
-    <div id="start-screen" class="absolute inset-0 z-40 bg-gradient-to-b from-sky-300/90 to-emerald-600/90 flex flex-col items-center justify-between p-4 sm:p-8 text-center">
+    <div id="screen-start" class="absolute inset-0 z-40 bg-gradient-to-b from-teal-400/95 via-emerald-500/95 to-emerald-700/95 flex flex-col items-center justify-between p-4 sm:p-8 text-center">
       
-      <!-- Logo Header -->
-      <div class="wooden-board text-white rounded-2xl px-6 py-4 max-w-2xl mt-2 sm:mt-6 bounce-ui">
-        <h1 class="text-[clamp(1.5rem,4vw,3.2rem)] font-extrabold tracking-wider leading-tight">
-          <i class="fa-solid fa-gavel mr-2 text-yellow-300"></i>เกมตีตัวตุ่น แม่ ก กา
+      <!-- Logo Board -->
+      <div class="bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-3xl border-4 border-yellow-300 p-4 sm:p-6 max-w-2xl mt-4 shadow-2xl transform hover:scale-105 transition duration-300">
+        <h1 class="text-[clamp(1.5rem,4.5vw,3.2rem)] font-extrabold tracking-wider leading-tight drop-shadow-lg">
+          <i class="fa-solid fa-microscope mr-2 text-yellow-200"></i>ความลับระบบย่อยอาหาร
         </h1>
-        <p class="text-[clamp(0.8rem,1.8vw,1.2rem)] font-light text-yellow-200 mt-1">
-          ฝึกแยกแยะคำศัพท์ภาษาไทย ชนะใจระบบย่อยอาหารอันแสนสนุก!
+        <p class="text-[clamp(0.85rem,1.8vw,1.3rem)] text-yellow-100 mt-1 font-light">
+          สวมบทบาทนักสำรวจจิ๋ว เดินทางไขความลับห้องครัวในร่างกายมนุษย์!
         </p>
       </div>
 
-      <!-- Instructions Container -->
-      <div class="w-full max-w-4xl bg-white/95 rounded-2xl p-4 sm:p-6 shadow-xl border-4 border-yellow-400 flex flex-col md:flex-row gap-4 items-center justify-center my-2">
+      <!-- Controls & Settings Panel -->
+      <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-4 my-2">
         
-        <!-- Left: Quick Info -->
-        <div class="flex-1 space-y-3 text-left">
-          <h2 class="text-xl sm:text-2xl font-bold text-slate-800 border-b-2 border-dashed border-emerald-500 pb-1">
-            <i class="fa-solid fa-gamepad text-emerald-600 mr-2"></i>กติกาและวิธีการเล่น
+        <!-- Left: Learning Goals -->
+        <div class="bg-white/95 rounded-2xl p-4 sm:p-5 shadow-lg border-2 border-emerald-400 text-left">
+          <h2 class="text-xl sm:text-2xl font-bold text-emerald-800 border-b-2 border-dashed border-emerald-200 pb-2 mb-3">
+            <i class="fa-solid fa-graduation-cap text-emerald-600 mr-2"></i>ภารกิจการเรียนรู้
           </h2>
-          
-          <div class="space-y-2 text-slate-700 text-[clamp(0.85rem,1.5vw,1.1rem)]">
+          <div class="space-y-3 text-slate-700 text-sm sm:text-base">
             <div class="flex items-start gap-2">
-              <span class="bg-emerald-500 text-white font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">1</span>
-              <p>เปิดใช้กล้อง <strong>ยกมือขึ้นให้กล้องเห็น</strong> จะมีค้อนไม้จำลองลอยตามปลายนิ้วชี้ของคุณ</p>
+              <span class="bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-1">1</span>
+              <p><strong>ปาก (Mouth)</strong> บดเคี้ยวอาหารและย่อยแป้งด้วยอะไมเลส</p>
             </div>
             <div class="flex items-start gap-2">
-              <span class="bg-emerald-500 text-white font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">2</span>
-              <p>ขยับค้อนไปทุบตัวตุ่นที่ถือ <strong>"คำแม่ ก กา" (คำที่ไม่มีตัวสะกด)</strong> เท่านั้น</p>
+              <span class="bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-1">2</span>
+              <p><strong>หลอดอาหาร (Esophagus)</strong> บีบรูดอาหารลงสู่กระเพาะ</p>
             </div>
             <div class="flex items-start gap-2">
-              <span class="bg-emerald-500 text-white font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">3</span>
-              <p>ระวัง! <strong>ห้ามทุบคำที่มีตัวสะกด</strong> เด็ดขาดนะเด็กๆ!</p>
+              <span class="bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-1">3</span>
+              <p><strong>กระเพาะอาหาร (Stomach)</strong> ย่อยโปรตีนด้วยกรดและเอนไซม์</p>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="bg-amber-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shrink-0 mt-1">4</span>
+              <p><strong>ลำไส้เล็ก-ใหญ่ (Intestines)</strong> ย่อยสมบูรณ์ ดูดซึมสารอาหารและน้ำ</p>
             </div>
           </div>
         </div>
 
-        <!-- Right: Scoring Guide -->
-        <div class="grid grid-cols-2 gap-3 w-full md:w-auto shrink-0">
-          <div class="bg-emerald-50 border-2 border-emerald-500 rounded-xl p-3 text-center">
-            <span class="text-xs font-semibold text-emerald-700 block uppercase">ตีถูก (แม่ ก กา)</span>
-            <span class="text-2xl sm:text-3xl font-extrabold text-emerald-600">+10 คะแนน</span>
-            <span class="text-xs text-slate-500 block mt-1">เช่น ปลา, หมา, ปู, เสือ</span>
+        <!-- Right: Control Selection -->
+        <div class="bg-white/95 rounded-2xl p-4 sm:p-5 shadow-lg border-2 border-amber-400 flex flex-col justify-between">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-800 border-b-2 border-dashed border-amber-200 pb-2 mb-3">
+              <i class="fa-solid fa-gamepad text-amber-600 mr-2"></i>เลือกวิธีการควบคุมเกม
+            </h2>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <!-- Mouse Mode Card -->
+              <button id="ctrl-mouse" class="border-2 border-amber-500 bg-amber-50 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer transition transform hover:scale-105 active:scale-95">
+                <i class="fa-solid fa-arrow-pointer text-2xl sm:text-3xl text-amber-600 mb-1"></i>
+                <span class="font-bold text-sm text-slate-800">เมาส์ / จอสัมผัส</span>
+                <span class="text-[10px] text-slate-500">ง่าย สรุกรวดเร็ว</span>
+              </button>
+              
+              <!-- AR Tracking Mode Card -->
+              <button id="ctrl-ar" class="border-2 border-slate-200 bg-slate-50 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer transition transform hover:scale-105 active:scale-95">
+                <i class="fa-solid fa-hand text-2xl sm:text-3xl text-slate-400 mb-1"></i>
+                <span class="font-bold text-sm text-slate-800">กล้อง AR (ใช้มือ)</span>
+                <span class="text-[10px] text-slate-500">ใช้ท่าทางโบกมือ</span>
+              </button>
+            </div>
           </div>
-          <div class="bg-red-50 border-2 border-red-400 rounded-xl p-3 text-center">
-            <span class="text-xs font-semibold text-red-700 block uppercase">ตีผิด (มีตัวสะกด)</span>
-            <span class="text-2xl sm:text-3xl font-extrabold text-red-600">-5 คะแนน</span>
-            <span class="text-xs text-slate-500 block mt-1">เช่น เดือน, นก, ลม, บ้าน</span>
+
+          <!-- Camera permission warning/status -->
+          <div id="camera-status" class="hidden text-xs bg-slate-100 text-slate-600 rounded-lg p-2 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-circle-notch animate-spin text-amber-500"></i>
+            <span>กำลังสแกนและเตรียมระบบจับการเคลื่อนไหวมือ...</span>
+          </div>
+          <div id="camera-ok" class="hidden text-xs bg-green-100 text-green-700 rounded-lg p-2 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-circle-check text-green-600"></i>
+            <span>เชื่อมต่อกล้องระบบจับนิ้วมือพร้อมแล้ว!</span>
           </div>
         </div>
 
       </div>
 
-      <!-- Camera Authorization / Status Bar -->
-      <div id="camera-loading-status" class="text-white text-sm bg-black/40 px-4 py-2 rounded-full flex items-center gap-2">
-        <i class="fa-solid fa-circle-notch animate-spin text-yellow-300"></i>
-        <span>กำลังเตรียมระบบกล้องตรวจจับมือ... โปรดอนุญาตสิทธิ์การเข้าถึงกล้อง</span>
-      </div>
-
-      <!-- Start Button Area -->
-      <div class="mb-2 sm:mb-6">
-        <button id="btn-start" disabled class="wooden-btn text-white text-[clamp(1.2rem,3vw,2rem)] font-extrabold px-12 py-4 rounded-2xl cursor-not-allowed opacity-50 flex items-center gap-3">
-          <i class="fa-solid fa-play"></i> เริ่มเกมเลย!
+      <!-- Start Button Action -->
+      <div class="mb-4">
+        <button id="btn-start-game" class="btn-orange text-white text-[clamp(1.2rem,2.5vw,1.8rem)] font-extrabold px-16 py-3 rounded-2xl flex items-center gap-3">
+          <i class="fa-solid fa-rocket animate-bounce"></i> เข้าสู่ร่างกายมนุษย์!
         </button>
       </div>
 
-      <!-- Tiny mole graphics decorative -->
-      <div class="absolute bottom-4 right-6 w-12 sm:w-20 opacity-80 pointer-events-none">
-        <svg viewBox="0 0 100 100" class="w-full">
-          <path d="M20,90 C20,40 80,40 80,90 Z" fill="#78350f"/>
-          <circle cx="35" cy="60" r="6" fill="#000"/>
-          <circle cx="65" cy="60" r="6" fill="#000"/>
-          <ellipse cx="50" cy="70" rx="10" ry="6" fill="#f43f5e"/>
+    </div>
+
+    <!-- ==================== 2. ANATOMICAL MAP OVERVIEW ==================== -->
+    <div id="screen-map" class="hidden absolute inset-0 z-30 bg-gradient-to-b from-slate-900 via-teal-950 to-slate-950 flex flex-col md:flex-row p-4 sm:p-6 items-center justify-between gap-4">
+      
+      <!-- Left side: Interactive Map Visual of Digestive Organs -->
+      <div class="flex-1 w-full max-w-md h-full flex items-center justify-center bg-black/40 rounded-3xl p-4 border border-white/10 relative">
+        <h3 class="absolute top-4 left-4 text-white text-sm font-semibold tracking-wide uppercase opacity-75">โครงสร้างเส้นทางเดินอาหาร</h3>
+        
+        <!-- Human Body Outline SVG with Organs -->
+        <svg id="anatomy-svg" viewBox="0 0 400 600" class="w-full h-full max-h-[85%] select-none">
+          <!-- Body Outline -->
+          <path d="M200,40 C140,40 120,90 120,130 C120,180 150,200 150,220 C140,240 100,280 100,380 C100,460 110,500 130,580 L270,580 C290,500 300,460 300,380 C300,280 260,240 250,220 C250,200 280,180 280,130 C280,90 260,40 200,40 Z" fill="rgba(255, 255, 255, 0.05)" stroke="rgba(255,255,255,0.2)" stroke-width="2" />
+          
+          <!-- Mouth -->
+          <ellipse id="map-mouth" cx="200" cy="110" rx="15" ry="10" fill="#f43f5e" class="cursor-pointer transition-all duration-300 hover:opacity-80" />
+          <text x="200" y="114" fill="white" font-size="10" text-anchor="middle" font-weight="bold">ปาก</text>
+
+          <!-- Esophagus (Path) -->
+          <path id="map-esophagus" d="M200,120 L200,220" stroke="#fb923c" stroke-width="8" stroke-linecap="round" class="cursor-pointer transition-all duration-300" />
+          
+          <!-- Stomach -->
+          <path id="map-stomach" d="M185,225 C160,220 150,260 170,280 C200,300 230,280 220,250 C210,230 195,230 185,225 Z" fill="#fbbf24" class="cursor-pointer transition-all duration-300" />
+          <text x="190" y="260" fill="#451a03" font-size="10" text-anchor="middle" font-weight="bold">กระเพาะ</text>
+
+          <!-- Small Intestine (Complex coils) -->
+          <path id="map-small" d="M180,310 C160,320 160,350 180,360 C200,370 200,340 220,350 C240,360 230,330 210,320 Z" fill="none" stroke="#34d399" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" class="cursor-pointer transition-all duration-300" />
+          <text x="200" y="340" fill="#064e3b" font-size="10" text-anchor="middle" font-weight="bold">ลำไส้เล็ก</text>
+
+          <!-- Large Intestine (Surrounding) -->
+          <path id="map-large" d="M160,300 L160,380 L240,380 L240,300" fill="none" stroke="#60a5fa" stroke-width="10" stroke-linecap="round" class="cursor-pointer transition-all duration-300" />
+          <text x="200" y="386" fill="white" font-size="10" text-anchor="middle" font-weight="bold">ลำไส้ใหญ่</text>
         </svg>
       </div>
+
+      <!-- Right side: Organ Description & Play Button -->
+      <div class="w-full md:w-[45%] flex flex-col justify-between h-full bg-slate-900/60 rounded-3xl p-5 border border-white/10 text-white">
+        <div>
+          <span class="text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full uppercase tracking-wider mb-2 inline-block">สถานีต่อไป</span>
+          <h2 id="map-organ-title" class="text-3xl sm:text-4xl font-extrabold text-yellow-300 mb-3">ด่านที่ 1: ปาก (Mouth)</h2>
+          
+          <!-- Organ Fact Box -->
+          <div class="bg-white/5 rounded-2xl p-4 border border-white/10 space-y-3 mb-4">
+            <p id="map-organ-desc" class="text-slate-300 text-sm sm:text-base leading-relaxed">
+              จุดเริ่มต้นของระบบย่อยอาหาร ฟันจะบดเคี้ยวอาหารแบบกายภาพ และมีน้ำลายที่มีเอนไซม์ "อะไมเลส" ช่วยย่อยสารอาหารประเภทแป้งให้เล็กลงจนมีรสหวาน
+            </p>
+            <div class="flex items-center gap-2 text-xs text-yellow-200">
+              <i class="fa-solid fa-circle-info"></i>
+              <span>เป้าหมายด่านนี้: เคี้ยวอาหารและสลายแป้งให้หมดก่อนเวลา!</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <button id="btn-start-stage" class="btn-cartoon w-full text-white text-xl font-bold py-3 rounded-2xl flex items-center justify-center gap-2">
+            <i class="fa-solid fa-gamepad"></i> เริ่มสำรวจด่านนี้!
+          </button>
+        </div>
+      </div>
+
     </div>
 
-    <!-- ==================== 2. GAMEPLAY SCREEN ==================== -->
-    <div id="gameplay-screen" class="hidden absolute inset-0 z-20 flex flex-col justify-between p-4 relative">
+    <!-- ==================== 3. ACTIVE GAMEPLAY SCREEN ==================== -->
+    <div id="screen-gameplay" class="hidden absolute inset-0 z-20 flex flex-col justify-between p-3 sm:p-4 relative">
       
-      <!-- HUD / Top Header -->
+      <!-- Top HUD (Stats Panel) -->
       <div class="flex justify-between items-start z-30 pointer-events-none">
         
-        <!-- Left: Timer board -->
-        <div class="wooden-board text-white rounded-xl px-4 py-2 flex items-center gap-3 min-w-[150px] sm:min-w-[180px]">
-          <i id="timer-icon" class="fa-solid fa-hourglass-half text-yellow-300 text-xl sm:text-2xl"></i>
+        <!-- Left: Stage Name & Timer -->
+        <div class="game-panel text-slate-800 rounded-xl px-3 py-2 flex items-center gap-3 min-w-[150px] sm:min-w-[180px]">
+          <i id="game-timer-icon" class="fa-solid fa-hourglass-half text-amber-500 text-xl sm:text-2xl"></i>
           <div>
-            <div class="text-[10px] sm:text-xs text-yellow-200">เวลาที่เหลือ</div>
-            <div id="hud-timer" class="text-2xl sm:text-3xl font-extrabold">60s</div>
+            <div id="game-stage-indicator" class="text-[10px] font-semibold text-slate-500 uppercase">ด่านที่ 1: ปาก</div>
+            <div id="game-timer" class="text-2xl font-extrabold text-slate-800">45s</div>
           </div>
         </div>
 
-        <!-- Center: Hand Status Warning (Shows dynamically) -->
-        <div id="hand-lost-warning" class="bg-red-600/90 text-white border-2 border-white px-4 py-2 rounded-full flex items-center gap-2 text-xs sm:text-sm animate-bounce shadow-lg pointer-events-auto transition-all opacity-0">
-          <i class="fa-solid fa-hand-pointer text-yellow-300 animate-ping"></i>
-          <span>ยกมือของคุณขึ้นให้กล้องเห็น!</span>
+        <!-- Center: Dynamic Interactive Guide Message -->
+        <div id="game-warning" class="bg-red-500/90 text-white border-2 border-white px-4 py-2 rounded-full flex items-center gap-2 text-xs sm:text-sm animate-bounce shadow-lg pointer-events-auto transition-all opacity-0">
+          <i class="fa-solid fa-hand text-yellow-300"></i>
+          <span id="game-warning-text">กรุณายกมือหน้ากล้อง!</span>
         </div>
 
-        <!-- Right: Score board -->
-        <div class="wooden-board text-white rounded-xl px-4 py-2 flex items-center gap-3 min-w-[150px] sm:min-w-[180px] justify-end">
+        <!-- Right: Current Score Board -->
+        <div class="game-panel text-slate-800 rounded-xl px-3 py-2 flex items-center gap-3 min-w-[150px] sm:min-w-[180px] justify-end">
           <div class="text-right">
-            <div class="text-[10px] sm:text-xs text-yellow-200">คะแนนปัจจุบัน</div>
-            <div id="hud-score" class="text-2xl sm:text-3xl font-extrabold text-green-300">000</div>
+            <div class="text-[10px] font-semibold text-slate-500 uppercase">สารอาหารที่เก็บสะสม</div>
+            <div id="game-score" class="text-2xl font-extrabold text-emerald-600">0</div>
           </div>
-          <i class="fa-solid fa-trophy text-yellow-400 text-xl sm:text-2xl"></i>
+          <i class="fa-solid fa-shield-heart text-pink-500 text-xl sm:text-2xl"></i>
         </div>
 
       </div>
 
-      <!-- MAIN GAME FIELD (Grid 3x3 of Mole Holes) -->
-      <div class="game-field flex-1 grid grid-cols-3 gap-2 sm:gap-4 max-w-4xl mx-auto w-full items-center justify-center py-4 z-10">
+      <!-- MAIN INTERACTIVE STAGE AREA -->
+      <div id="gameplay-area" class="flex-1 w-full max-w-4xl mx-auto flex items-center justify-center relative bg-black/10 rounded-3xl border border-white/20 overflow-hidden my-2">
         
-        <!-- Holes generated dynamically here or predefined -->
-        <!-- We will define 9 holes statically to make layout styling predictable and responsive -->
+        <!-- dynamic SVG content injected or drawn here based on Stage active -->
+        <svg id="stage-interactive-canvas" viewBox="0 0 800 500" class="w-full h-full">
+          <!-- Will draw dynamic graphics on request -->
+        </svg>
+
+      </div>
+
+      <!-- Bottom Interactive Help & Controls fallback -->
+      <div class="w-full max-w-4xl mx-auto flex items-center justify-between z-10 px-2">
         
-        <!-- Hole 0 -->
-        <div class="relative w-full aspect-square flex items-center justify-center">
-          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
-          <div id="mole-container-0" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
-            <!-- Mole representation -->
-            <div id="mole-0" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
-              <!-- Label bubble above mole head -->
-              <div id="mole-word-0" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">ปลา</div>
-              <!-- SVG Mole Character -->
-              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
-                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/> <!-- Body -->
-                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/> <!-- Inner belly -->
-                <!-- Eyes -->
-                <circle cx="38" cy="40" r="7" fill="#fff"/>
-                <circle cx="38" cy="40" r="3" fill="#000"/>
-                <circle cx="62" cy="40" r="7" fill="#fff"/>
-                <circle cx="62" cy="40" r="3" fill="#000"/>
-                <!-- Nose -->
-                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
-                <!-- Whiskers -->
-                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
-              </svg>
-            </div>
-          </div>
+        <div class="text-xs text-white/80 bg-black/30 px-3 py-1.5 rounded-full backdrop-blur-sm">
+          <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>
+          <span id="stage-controls-hint">ใช้มือเคาะ หรือขยับคีย์เมาส์เพื่อเก็บสารอาหาร</span>
         </div>
 
-        <!-- Hole 1 -->
-        <div class="relative w-full aspect-square flex items-center justify-center">
-          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
-          <div id="mole-container-1" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
-            <div id="mole-1" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
-              <div id="mole-word-1" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">หมา</div>
-              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
-                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/>
-                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/>
-                <circle cx="38" cy="40" r="7" fill="#fff"/>
-                <circle cx="38" cy="40" r="3" fill="#000"/>
-                <circle cx="62" cy="40" r="7" fill="#fff"/>
-                <circle cx="62" cy="40" r="3" fill="#000"/>
-                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
-                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Hole 2 -->
-        <div class="relative w-full aspect-square flex items-center justify-center">
-          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
-          <div id="mole-container-2" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
-            <div id="mole-2" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
-              <div id="mole-word-2" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">ตา</div>
-              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
-                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/>
-                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/>
-                <circle cx="38" cy="40" r="7" fill="#fff"/>
-                <circle cx="38" cy="40" r="3" fill="#000"/>
-                <circle cx="62" cy="40" r="7" fill="#fff"/>
-                <circle cx="62" cy="40" r="3" fill="#000"/>
-                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
-                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Hole 3 -->
-        <div class="relative w-full aspect-square flex items-center justify-center">
-          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
-          <div id="mole-container-3" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
-            <div id="mole-3" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
-              <div id="mole-word-3" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">ปู</div>
-              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
-                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/>
-                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/>
-                <circle cx="38" cy="40" r="7" fill="#fff"/>
-                <circle cx="38" cy="40" r="3" fill="#000"/>
-                <circle cx="62" cy="40" r="7" fill="#fff"/>
-                <circle cx="62" cy="40" r="3" fill="#000"/>
-                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
-                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Hole 4 -->
-        <div class="relative w-full aspect-square flex items-center justify-center">
-          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
-          <div id="mole-container-4" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
-            <div id="mole-4" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
-              <div id="mole-word-4" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">มือ</div>
-              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
-                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/>
-                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/>
-                <circle cx="38" cy="40" r="7" fill="#fff"/>
-                <circle cx="38" cy="40" r="3" fill="#000"/>
-                <circle cx="62" cy="40" r="7" fill="#fff"/>
-                <circle cx="62" cy="40" r="3" fill="#000"/>
-                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
-                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Hole 5 -->
-        <div class="relative w-full aspect-square flex items-center justify-center">
-          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
-          <div id="mole-container-5" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
-            <div id="mole-5" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
-              <div id="mole-word-5" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">เสือ</div>
-              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
-                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/>
-                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/>
-                <circle cx="38" cy="40" r="7" fill="#fff"/>
-                <circle cx="38" cy="40" r="3" fill="#000"/>
-                <circle cx="62" cy="40" r="7" fill="#fff"/>
-                <circle cx="62" cy="40" r="3" fill="#000"/>
-                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
-                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Hole 6 -->
-        <div class="relative w-full aspect-square flex items-center justify-center">
-          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
-          <div id="mole-container-6" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
-            <div id="mole-6" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
-              <div id="mole-word-6" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">ดี</div>
-              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
-                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/>
-                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/>
-                <circle cx="38" cy="40" r="7" fill="#fff"/>
-                <circle cx="38" cy="40" r="3" fill="#000"/>
-                <circle cx="62" cy="40" r="7" fill="#fff"/>
-                <circle cx="62" cy="40" r="3" fill="#000"/>
-                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
-                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Hole 7 -->
-        <div class="relative w-full aspect-square flex items-center justify-center">
-          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
-          <div id="mole-container-7" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
-            <div id="mole-7" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
-              <div id="mole-word-7" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">เรือ</div>
-              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
-                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/>
-                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/>
-                <circle cx="38" cy="40" r="7" fill="#fff"/>
-                <circle cx="38" cy="40" r="3" fill="#000"/>
-                <circle cx="62" cy="40" r="7" fill="#fff"/>
-                <circle cx="62" cy="40" r="3" fill="#000"/>
-                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
-                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Hole 8 -->
-        <div class="relative w-full aspect-square flex items-center justify-center">
-          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
-          <div id="mole-container-8" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
-            <div id="mole-8" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
-              <div id="mole-word-8" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">สี</div>
-              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
-                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/>
-                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/>
-                <circle cx="38" cy="40" r="7" fill="#fff"/>
-                <circle cx="38" cy="40" r="3" fill="#000"/>
-                <circle cx="62" cy="40" r="7" fill="#fff"/>
-                <circle cx="62" cy="40" r="3" fill="#000"/>
-                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
-                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
-                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
-              </svg>
-            </div>
-          </div>
+        <!-- Progress bar of digestive tract -->
+        <div class="flex items-center gap-1.5 text-xs text-white">
+          <div id="prog-0" class="w-2.5 h-2.5 rounded-full bg-red-400"></div>
+          <div class="w-4 h-0.5 bg-white/20"></div>
+          <div id="prog-1" class="w-2.5 h-2.5 rounded-full bg-white/30"></div>
+          <div class="w-4 h-0.5 bg-white/20"></div>
+          <div id="prog-2" class="w-2.5 h-2.5 rounded-full bg-white/30"></div>
+          <div class="w-4 h-0.5 bg-white/20"></div>
+          <div id="prog-3" class="w-2.5 h-2.5 rounded-full bg-white/30"></div>
+          <div class="w-4 h-0.5 bg-white/20"></div>
+          <div id="prog-4" class="w-2.5 h-2.5 rounded-full bg-white/30"></div>
         </div>
 
       </div>
 
-      <!-- CAMERA PREVIEW & HAND CURSORS OVERLAY -->
-      <div class="absolute inset-0 z-20 pointer-events-none">
-        
-        <!-- Webcam Preview Element (Small overlay in corner for reference) -->
-        <div class="absolute bottom-4 left-4 w-32 sm:w-40 aspect-video rounded-xl border-3 border-white/80 shadow-md overflow-hidden bg-black/60 pointer-events-auto flex items-center justify-center">
-          <!-- Hidden video element -->
-          <video id="webcam-video" class="w-full h-full object-cover transform -scale-x-100" autoplay playsinline muted></video>
-          <!-- Small overlay labels -->
-          <div class="absolute bottom-1 right-1 bg-black/60 text-[8px] text-white px-1 rounded font-mono">กล้อง</div>
-        </div>
-
-        <!-- AR Overlays (Generated hand tracking cursor representation) -->
-        <!-- Hand 1 (Left / Primary) -->
-        <div id="hammer-hand-0" class="hammer-cursor absolute left-1/2 top-1/2 w-16 sm:w-24 h-16 sm:h-24 opacity-0 transition-opacity z-50">
-          <!-- HAMMER GRAPHIC -->
-          <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-xl">
-            <!-- Handle -->
-            <rect x="15" y="55" width="50" height="14" rx="4" fill="#a16207" transform="rotate(45 40 60)"/>
-            <!-- Metal Head -->
-            <rect x="40" y="15" width="45" height="30" rx="6" fill="#64748b"/>
-            <!-- Red Strike Face -->
-            <rect x="80" y="18" width="8" height="24" rx="2" fill="#ef4444"/>
-            <!-- Grip details -->
-            <line x1="18" y1="78" x2="28" y2="68" stroke="#451a03" stroke-width="4"/>
-          </svg>
-        </div>
-
-        <!-- Hand 2 (Right / Secondary) -->
-        <div id="hammer-hand-1" class="hammer-cursor absolute left-1/2 top-1/2 w-16 sm:w-24 h-16 sm:h-24 opacity-0 transition-opacity z-50">
-          <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-xl">
-            <!-- Handle -->
-            <rect x="15" y="55" width="50" height="14" rx="4" fill="#a16207" transform="rotate(45 40 60)"/>
-            <!-- Metal Head -->
-            <rect x="40" y="15" width="45" height="30" rx="6" fill="#64748b"/>
-            <!-- Red Strike Face -->
-            <rect x="80" y="18" width="8" height="24" rx="2" fill="#ef4444"/>
-            <line x1="18" y1="78" x2="28" y2="68" stroke="#451a03" stroke-width="4"/>
-          </svg>
-        </div>
-
+      <!-- CAM PREVIEW OVERLAY (For gesture control mode) -->
+      <div id="ar-cam-preview-container" class="absolute bottom-4 left-4 w-32 sm:w-40 aspect-video rounded-xl border-3 border-white/80 shadow-md overflow-hidden bg-black/60 hidden pointer-events-auto flex items-center justify-center">
+        <video id="webcam-video" class="w-full h-full object-cover transform -scale-x-100" autoplay playsinline muted></video>
+        <div class="absolute bottom-1 right-1 bg-black/60 text-[8px] text-white px-1 rounded font-mono">กล้องเปิดใช้งาน</div>
       </div>
 
-      <!-- BOTTOM DECORATIVE GRASS (Foreground) -->
-      <div class="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-emerald-600 to-transparent pointer-events-none z-10"></div>
+      <!-- Cursor visual element for hand tracking -->
+      <div id="hand-pointer" class="hand-cursor absolute w-10 h-10 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0">
+        <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+          <circle cx="50" cy="50" r="15" fill="rgba(239, 68, 68, 0.4)" stroke="#ef4444" stroke-width="4" />
+          <circle cx="50" cy="50" r="4" fill="#ef4444" />
+        </svg>
+      </div>
+
     </div>
 
-    <!-- ==================== 3. GAME OVER SCREEN ==================== -->
-    <div id="game-over-screen" class="hidden absolute inset-0 z-40 bg-gradient-to-b from-slate-900/90 via-emerald-950/95 to-slate-900/90 flex flex-col items-center justify-center p-4 sm:p-8 text-center">
+    <!-- ==================== 4. STAGE CLEAR & MINI QUIZ SCREEN ==================== -->
+    <div id="screen-quiz" class="hidden absolute inset-0 z-40 bg-gradient-to-b from-teal-950/95 via-emerald-950/95 to-slate-950/95 flex flex-col items-center justify-center p-4 sm:p-8 text-center">
       
-      <!-- Trophy Head Header -->
-      <div class="wooden-board text-white rounded-2xl px-8 py-4 max-w-xl bounce-ui mb-4">
-        <h2 class="text-[clamp(1.5rem,4vw,3rem)] font-extrabold tracking-wider text-yellow-300">
-          <i class="fa-solid fa-flag-checkered mr-2 text-white"></i>หมดเวลาแล้ว!
+      <!-- Fact Board -->
+      <div class="bg-gradient-to-r from-amber-500 to-yellow-500 text-white rounded-2xl border-4 border-yellow-300 px-6 py-4 max-w-xl bounce-ui mb-4">
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-yellow-100">
+          <i class="fa-solid fa-circle-check mr-2"></i>ผ่านด่านสำเร็จ!
         </h2>
-        <p id="score-evaluation" class="text-[clamp(0.85rem,1.8vw,1.3rem)] text-emerald-200 mt-1">
-          ยอดเยี่ยมมากน้องๆ สมองระบบย่อยอาหารของเราแข็งแรงสุดๆ!
+        <p class="text-sm sm:text-base text-yellow-50 mt-1">
+          ยอดเยี่ยมมาก! เพื่อรับโบนัสคะแนนเพิ่มเป็นสองเท่า มาทบทวนความรู้ด่านนี้กัน!
         </p>
       </div>
 
-      <!-- Results Score Box -->
-      <div class="bg-white/95 border-4 border-yellow-400 rounded-3xl p-6 sm:p-8 shadow-2xl max-w-lg w-full mb-6">
-        <div class="text-slate-500 font-semibold text-sm sm:text-base uppercase tracking-wider mb-1">คะแนนรวมทั้งหมดของคุณคือ</div>
-        <div id="final-score" class="text-5xl sm:text-7xl font-black text-emerald-600 tracking-tight mb-4">250</div>
+      <!-- Quiz question Card -->
+      <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-2xl max-w-xl w-full border-4 border-teal-500 mb-6">
+        <div class="bg-emerald-50 text-emerald-800 font-bold px-4 py-2 rounded-full inline-block text-xs uppercase mb-3">คำถามสะสมพลังงาน</div>
+        <h3 id="quiz-question" class="text-lg sm:text-xl font-bold text-slate-800 leading-snug mb-5">
+          เอนไซม์ "อะไมเลส" ที่อยู่ในน้ำลายมีหน้าที่ในการย่อยสารอาหารประเภทใด?
+        </h3>
         
-        <!-- Detailed metrics -->
-        <div class="grid grid-cols-2 gap-4 border-t-2 border-dashed border-slate-200 pt-4">
-          <div class="bg-emerald-50 rounded-xl p-3">
-            <span class="text-xs font-semibold text-emerald-800 block">ทุบถูกต้อง (แม่ ก กา)</span>
-            <span id="final-hits" class="text-xl sm:text-2xl font-bold text-emerald-600">25 ครั้ง</span>
+        <!-- Answer Choices Grid -->
+        <div class="grid grid-cols-1 gap-3 text-left">
+          <button id="choice-0" class="border-2 border-slate-200 hover:border-teal-500 hover:bg-teal-50 active:scale-98 rounded-xl p-3.5 flex items-center gap-3 transition cursor-pointer">
+            <span class="bg-teal-500 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs shrink-0">ก</span>
+            <span id="choice-text-0" class="font-semibold text-slate-700 text-sm sm:text-base">ย่อยโปรตีน (พวกเนื้อสัตว์)</span>
+          </button>
+          <button id="choice-1" class="border-2 border-slate-200 hover:border-teal-500 hover:bg-teal-50 active:scale-98 rounded-xl p-3.5 flex items-center gap-3 transition cursor-pointer">
+            <span class="bg-teal-500 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs shrink-0">ข</span>
+            <span id="choice-text-1" class="font-semibold text-slate-700 text-sm sm:text-base">ย่อยแป้ง (คาร์โบไฮเดรต)</span>
+          </button>
+          <button id="choice-2" class="border-2 border-slate-200 hover:border-teal-500 hover:bg-teal-50 active:scale-98 rounded-xl p-3.5 flex items-center gap-3 transition cursor-pointer">
+            <span class="bg-teal-500 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold text-xs shrink-0">ค</span>
+            <span id="choice-text-2" class="font-semibold text-slate-700 text-sm sm:text-base">ย่อยไขมัน (พวกน้ำมัน เนย)</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ==================== 5. END SUMMARY SCREEN ==================== -->
+    <div id="screen-end" class="hidden absolute inset-0 z-40 bg-gradient-to-b from-slate-900/95 via-emerald-950/95 to-slate-950/95 flex flex-col items-center justify-center p-4 sm:p-8 text-center">
+      
+      <!-- Trophy Visuals -->
+      <div class="wooden-board text-white rounded-2xl px-8 py-4 max-w-xl bounce-ui mb-4">
+        <h2 class="text-[clamp(1.5rem,4vw,3rem)] font-extrabold tracking-wider text-yellow-300">
+          <i class="fa-solid fa-crown mr-2 text-yellow-400"></i>ภารกิจเสร็จสมบูรณ์!
+        </h2>
+        <p class="text-sm sm:text-lg text-emerald-200 mt-1">
+          คุณสามารถช่วยร่างกายย่อยและดูดซึมสารอาหารได้ครบถ้วนแล้ว!
+        </p>
+      </div>
+
+      <!-- Score Box representation -->
+      <div class="bg-white/95 border-4 border-yellow-400 rounded-3xl p-6 sm:p-8 shadow-2xl max-w-md w-full mb-6">
+        <div class="text-slate-500 font-semibold text-xs sm:text-sm uppercase tracking-wider mb-1">คะแนนรวมสูงสุด</div>
+        <div id="final-score" class="text-5xl sm:text-7xl font-black text-emerald-600 tracking-tight mb-2">420</div>
+        
+        <!-- Score breakdown -->
+        <div class="border-t border-dashed border-slate-200 pt-3 mt-3 text-slate-600 text-xs sm:text-sm space-y-1.5 text-left">
+          <div class="flex justify-between">
+            <span>เก็บสะสมสารอาหารชีวภาพ:</span>
+            <span id="final-nutrients" class="font-bold text-slate-800">120 ชิ้น</span>
           </div>
-          <div class="bg-red-50 rounded-xl p-3">
-            <span class="text-xs font-semibold text-red-800 block">ทุบผิด (มีตัวสะกด)</span>
-            <span id="final-misses" class="text-xl sm:text-2xl font-bold text-red-600">3 ครั้ง</span>
+          <div class="flex justify-between">
+            <span>ตอบคำถามถูกต้อง:</span>
+            <span id="final-correct-answers" class="font-bold text-slate-800">5 / 5 ข้อ</span>
           </div>
         </div>
       </div>
 
-      <!-- Restart Button -->
+      <!-- Restart game trigger button -->
       <div>
-        <button id="btn-restart" class="wooden-btn text-white text-[clamp(1.2rem,2.5vw,1.8rem)] font-extrabold px-12 py-4 rounded-2xl flex items-center gap-3">
-          <i class="fa-solid fa-arrows-rotate"></i> เล่นอีกครั้ง!
+        <button id="btn-restart" class="btn-orange text-white text-[clamp(1.2rem,2.5vw,1.8rem)] font-extrabold px-12 py-4 rounded-2xl flex items-center gap-3">
+          <i class="fa-solid fa-arrows-rotate animate-spin"></i> เล่นอีกครั้ง!
         </button>
       </div>
 
@@ -553,48 +430,12 @@
 
   </div>
 
-  <!-- FLOATING SCORE FEEDBACK LAYER -->
+  <!-- FLOATING INTERACTIVE ALERTS/FEEDBACK AREA -->
   <div id="feedback-layer" class="fixed inset-0 pointer-events-none z-50"></div>
 
-  <!-- Hidden Canvas for Video Resolution Tracking & Math calculations if needed -->
-  <canvas id="hidden-math-canvas" width="640" height="480" class="hidden"></svg>
-
-  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <!-- Custom Sound Generator Code and Logic Scripts -->
   <script>
-    // --- 1. WORD DICTIONARIES ---
-    const KOKA_WORDS = [
-      "ปลา", "หมา", "ตา", "ขา", "ปู", "งู", "หู", "มือ", "เสือ", "เรือ", 
-      "ไก่", "นา", "ดี", "สี", "ผี", "ชา", "เก้าอี้", "มะลิ", "กะลา", "ยา"
-    ];
-
-    const SPELL_WORDS = [
-      "เดือน", "นก", "ปาก", "กิน", "ลม", "ฝน", "คน", "บ้าน", "นอน", "จาน", 
-      "แมว", "ช้าง", "ลิง", "เป็ด", "ปากกา", "มด", "กระดาษ", "ข้าว", "โรงเรียน", "น้ำ"
-    ];
-
-    // --- 2. GAME STATE ---
-    let gameState = 'initializing'; // 'initializing', 'ready', 'playing', 'ended'
-    let score = 0;
-    let timeRemaining = 60;
-    let timerInterval = null;
-    let moleInterval = null;
-    let totalHits = 0;
-    let totalMisses = 0;
-    
-    // Active states of 9 holes
-    const activeMoles = Array(9).fill(null).map(() => ({
-      active: false,
-      word: "",
-      isKoka: false,
-      hideTimeout: null,
-      element: null,
-      wordElement: null
-    }));
-
-    // Touch-alternative support (click/touch coordinates fallback for testing or non-cam devices)
-    let lastHandDetectedTime = 0;
-
-    // --- 3. AUDIO SYNTHESIZER (Web Audio API) ---
+    // --- 1. WEB AUDIO API SYNTHESIZER ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     function playSound(type) {
@@ -609,488 +450,1029 @@
 
       const now = audioCtx.currentTime;
 
-      if (type === 'hit-correct') {
-        // High cheery sound
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(587.33, now); // D5
-        osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
-        gainNode.gain.setValueAtTime(0.2, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-        osc.start(now);
-        osc.stop(now + 0.25);
-      } else if (type === 'hit-wrong') {
-        // Low buzzer sound
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(220, now); // A3
-        osc.frequency.exponentialRampToValueAtTime(110, now + 0.3); // A2
-        gainNode.gain.setValueAtTime(0.15, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
-        osc.start(now);
-        osc.stop(now + 0.35);
-      } else if (type === 'pop') {
-        // Quick upward sweep
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(300, now);
-        osc.frequency.exponentialRampToValueAtTime(500, now + 0.1);
-        gainNode.gain.setValueAtTime(0.1, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-        osc.start(now);
-        osc.stop(now + 0.12);
-      } else if (type === 'time-low') {
-        // Short high beep
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(1000, now);
-        gainNode.gain.setValueAtTime(0.08, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-        osc.start(now);
-        osc.stop(now + 0.1);
-      } else if (type === 'game-over') {
-        // Majestic fanfare
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(523.25, now); // C5
-        osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
-        osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
-        osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.3); // C6
-        gainNode.gain.setValueAtTime(0.2, now);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
-        osc.start(now);
-        osc.stop(now + 0.8);
+      switch(type) {
+        case 'chew':
+          // Low crunch sound
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(150, now);
+          osc.frequency.exponentialRampToValueAtTime(40, now + 0.1);
+          gainNode.gain.setValueAtTime(0.3, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+          osc.start(now);
+          osc.stop(now + 0.12);
+          break;
+        case 'swallow':
+          // Upward bubble sound
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(200, now);
+          osc.frequency.exponentialRampToValueAtTime(600, now + 0.25);
+          gainNode.gain.setValueAtTime(0.2, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+          break;
+        case 'correct':
+          // Sparkling double high beep
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, now); // C5
+          osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+          gainNode.gain.setValueAtTime(0.15, now);
+          gainNode.gain.setValueAtTime(0.15, now + 0.08);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+          break;
+        case 'incorrect':
+          // Low fail buzzer
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, now);
+          osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+          gainNode.gain.setValueAtTime(0.15, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+          osc.start(now);
+          osc.stop(now + 0.3);
+          break;
+        case 'absorb':
+          // Happy coin ding
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(987.77, now); // B5
+          gainNode.gain.setValueAtTime(0.1, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+          osc.start(now);
+          osc.stop(now + 0.15);
+          break;
+        case 'acid_burn':
+          // Sizzling hiss
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(800, now);
+          osc.frequency.linearRampToValueAtTime(1200, now + 0.2);
+          gainNode.gain.setValueAtTime(0.1, now);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+          osc.start(now);
+          osc.stop(now + 0.2);
+          break;
       }
     }
+  </script>
 
-    // --- 4. MEDIAPIPE HAND TRACKING & WEBCAM ---
+  <script>
+    // --- 2. GAME CONSTANTS & STAGES DESIGN ---
+    const STAGE_CONFIGS = [
+      {
+        id: 0,
+        name: "ปาก (Mouth)",
+        title: "ด่านที่ 1: ปาก (Mouth)",
+        desc: "ฟันจะทำหน้าที่บดเคี้ยวอาหารให้เล็กลง (ย่อยเชิงกล) และมีเอนไซม์ 'อะไมเลส' จากน้ำลายช่วยย่อยคาร์โบไฮเดรต/แป้ง ให้มีโมเลกุลน้ำตาลที่เล็กลง (ย่อยเชิงเคมี)",
+        targetHint: "เคี้ยวอาหารและบดเม็ดแป้ง (สีเหลือง) ด้วยการกดเมาส์รัวๆ หรือโบกมือผ่านกล้อง!",
+        quiz: {
+          q: "เอนไซม์ 'อะไมเลส' ในน้ำลาย ทำหน้าที่ย่อยสารอาหารชนิดใดเป็นอันดับแรก?",
+          choices: ["ย่อยโปรตีน (เนื้อสัตว์)", "ย่อยแป้ง (คาร์โบไฮเดรต)", "ย่อยไขมัน (น้ำมัน พืช)"],
+          correct: 1
+        }
+      },
+      {
+        id: 1,
+        name: "หลอดอาหาร (Esophagus)",
+        title: "ด่านที่ 2: หลอดอาหาร (Esophagus)",
+        desc: "ทำหน้าที่เป็นท่อลำเลียงอาหารจากปากลงสู่กระเพาะอาหารโดยมีการหดตัวและคลายตัวของกล้ามเนื้อเป็นระลอกคล้ายคลื่น เรียกว่า 'เพอริสทัลซิส' (Peristalsis)",
+        targetHint: "กดรูดกล้ามเนื้อซ้าย-ขวาสลับกัน เพื่อผลักอาหารให้รูดเคลื่อนลงด้านล่าง!",
+        quiz: {
+          q: "การบีบตัวเป็นระลอกคล้ายคลื่นของหลอดอาหารเพื่อดันอาหารลงด้านล่าง เรียกว่าอะไร?",
+          choices: ["การแพร่ซึมสารอาหาร", "เพอริสทัลซิส (Peristalsis)", "การหมุนเวียนกล้ามเนื้อ"],
+          correct: 1
+        }
+      },
+      {
+        id: 2,
+        name: "กระเพาะอาหาร (Stomach)",
+        title: "ด่านที่ 3: กระเพาะอาหาร (Stomach)",
+        desc: "กระเพาะอาหารหลั่งกรดเกลือ (กรดไฮโดรคลอริก) และเอนไซม์ 'เปปซิน' (Pepsin) เพื่อทำการย่อยสารอาหารประเภท 'โปรตีน' ให้มีขนาดโมเลกุลเล็กลง",
+        targetHint: "ปล่อยสารย่อยเปปซินใส่โมเลกุลโปรตีน (สีแดง) หลีกเลี่ยงกรดส่วนเกินเพื่อไม่ให้กระเพาะอักเสบ!",
+        quiz: {
+          q: "กระเพาะอาหารทำหน้าที่ย่อยสารอาหารประเภทใดเป็นหลัก?",
+          choices: ["สารอาหารโปรตีน", "สารอาหารไขมันล้วน", "น้ำและแร่ธาตุวิตามิน"],
+          correct: 0
+        }
+      },
+      {
+        id: 3,
+        name: "ลำไส้เล็ก (Small Intestine)",
+        title: "ด่านที่ 4: ลำไส้เล็ก (Small Intestine)",
+        desc: "อวัยวะที่สำคัญที่สุดในการย่อยและดูดซึมสารอาหารทุกประเภท (คาร์โบไฮเดรต โปรตีน ไขมัน) ผ่านทางปุ่มซึมขนาดเล็กจิ๋วจำนวนมหาศาลเรียกว่า 'วิลลัส' (Villus)",
+        targetHint: "เลื่อนตัวรับดูดซึมเพื่อเก็บสารอาหาร (กลูโคส, กรดอะมิโน, ไขมัน) ที่ย่อยเสร็จแล้วส่งเข้าร่างกาย!",
+        quiz: {
+          q: "สารอาหารเกือบทั้งหมดจะถูกย่อยจนสมบูรณ์และถูกดูดซึมมากที่สุดที่อวัยวะใด?",
+          choices: ["กระเพาะอาหาร", "ลำไส้เล็ก", "ลำไส้ใหญ่"],
+          correct: 1
+        }
+      },
+      {
+        id: 4,
+        name: "ลำไส้ใหญ่ (Large Intestine)",
+        title: "ด่านที่ 5: ลำไส้ใหญ่ (Large Intestine)",
+        desc: "ไม่มีการย่อยอาหารแล้ว แต่จะทำหน้าที่หลักในการดูดน้ำ เกลือแร่ และวิตามินกลับคืนสู่ร่างกายจากกากอาหาร เพื่อเตรียมขับถ่ายของเสียออกไป",
+        targetHint: "กดจิ้มเพื่อรีดดูดซึมน้ำ (หยดน้ำสีฟ้า) ก่อนที่อาหารจะแปลงสภาพเป็นอุจจาระ!",
+        quiz: {
+          q: "หน้าที่หลักสำคัญที่สุดของลำไส้ใหญ่คือข้อใด?",
+          choices: ["ย่อยคาร์โบไฮเดรตขั้นสุดท้าย", "ดูดซึมน้ำและแร่ธาตุกลับคืนสู่ร่างกาย", "ฆ่าเชื้อโรคด้วยน้ำดี"],
+          correct: 1
+        }
+      }
+    ];
+
+    // Global Interactive States
+    let activeControlMode = 'mouse'; // 'mouse' or 'camera'
+    let currentStageIndex = 0;
+    let totalScore = 0;
+    let finalAnswerCount = 0;
+    let finalNutrientCount = 0;
+
+    // Runtime engine loops
+    let gameplayTimer = null;
+    let currentStageTimerValue = 40;
+    let gameLoopInterval = null;
+    let gameActive = false;
+  </script>
+
+  <script>
+    // --- 3. MEDIAPIPE CAMERA CONTROLLER & COORDINATES TRACKER ---
     const videoElement = document.getElementById('webcam-video');
-    const hammerLeft = document.getElementById('hammer-hand-0');
-    const hammerRight = document.getElementById('hammer-hand-1');
-    const handWarning = document.getElementById('hand-lost-warning');
-
-    let isHandsLibraryLoaded = false;
+    const handPointer = document.getElementById('hand-pointer');
+    const warningLabel = document.getElementById('game-warning');
+    const warningText = document.getElementById('game-warning-text');
+    
     let cameraInstance = null;
+    let lastKnownHandX = 400; // Relative to canvas space
+    let lastKnownHandY = 250;
+    let handActive = false;
 
-    // Mapping normalized MediaPipe coordinates into responsive viewport coordinates inside game board
-    const gameContainer = document.querySelector('.relative.w-full.max-w-6xl');
-
-    function onResults(results) {
-      const now = Date.now();
-      
+    // Output handler from MediaPipe
+    function onHandResults(results) {
       if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-        lastHandDetectedTime = now;
-        handWarning.style.opacity = '0'; // Hide warning
-
-        // Show/hide correct amount of hammer elements
-        const count = results.multiHandLandmarks.length;
-        if (count >= 1) {
-          hammerLeft.style.opacity = '1';
-          positionHammer(hammerLeft, results.multiHandLandmarks[0]);
-          checkCollision(results.multiHandLandmarks[0], 0);
-        } else {
-          hammerLeft.style.opacity = '0';
-        }
-
-        if (count >= 2) {
-          hammerRight.style.opacity = '1';
-          positionHammer(hammerRight, results.multiHandLandmarks[1]);
-          checkCollision(results.multiHandLandmarks[1], 1);
-        } else {
-          hammerRight.style.opacity = '0';
-        }
-      } else {
-        // No hands seen
-        hammerLeft.style.opacity = '0';
-        hammerRight.style.opacity = '0';
+        warningLabel.style.opacity = '0';
+        handActive = true;
         
-        if (gameState === 'playing' && (now - lastHandDetectedTime > 1500)) {
-          handWarning.style.opacity = '1'; // Show warning if hand gone > 1.5s
+        // Track the primary index finger tip (Landmark 8)
+        const primaryHand = results.multiHandLandmarks[0];
+        const indexTip = primaryHand[8];
+
+        // Map coordinates (mirrored X coordinate)
+        const mappedX = (1 - indexTip.x) * 800; // Map directly into canvas width space
+        const mappedY = indexTip.y * 500;       // Map into canvas height space
+
+        lastKnownHandX = mappedX;
+        lastKnownHandY = mappedY;
+
+        // Position hand cursor pointer overlay element
+        const playArea = document.getElementById('gameplay-area');
+        const playBounds = playArea.getBoundingClientRect();
+        
+        handPointer.style.opacity = '1';
+        handPointer.style.left = `${(1 - indexTip.x) * playBounds.width}px`;
+        handPointer.style.top = `${indexTip.y * playBounds.height}px`;
+
+        // Handle specific actions for hand gestures
+        handleHandAction(primaryHand);
+      } else {
+        handActive = false;
+        handPointer.style.opacity = '0';
+        if (gameActive && activeControlMode === 'camera') {
+          warningText.textContent = "ยกมือของคุณขึ้นให้กล้องตรวจจับ!";
+          warningLabel.style.opacity = '1';
         }
       }
     }
 
-    // Positions hammer at pointer (index finger tip is landmark 8)
-    function positionHammer(hammerElement, landmarks) {
-      // Landmark 8 is Index Finger Tip
-      const indexTip = landmarks[8];
-      
-      // Convert normalized MediaPipe coordinate (0-1) to container dimension coordinates
-      // Since video is mirrored visually, we mirror the tracking coordinates on x-axis
-      const x = (1 - indexTip.x) * 100; // Percent width
-      const y = indexTip.y * 100;       // Percent height
+    // Special hand gesture analyzer (e.g. pinch, fist, wave)
+    let lastChewGestureTime = 0;
+    function handleHandAction(landmarks) {
+      if (!gameActive) return;
 
-      hammerElement.style.left = `${x}%`;
-      hammerElement.style.top = `${y}%`;
-    }
-
-    // Collision detection: check if index finger is over any active mole
-    const moleTriggerCooldown = Array(9).fill(0); // Cooldown for hits to prevent multi-hit spikes
-
-    function checkCollision(landmarks, handIndex) {
-      if (gameState !== 'playing') return;
-
-      const now = Date.now();
-      const indexTip = landmarks[8];
-      
-      // Mirror X coordinates
-      const xPercent = (1 - indexTip.x) * 100;
-      const yPercent = indexTip.y * 100;
-
-      // Iterate and check all 9 holes
-      for (let i = 0; i < 9; i++) {
-        if (!activeMoles[i].active) continue;
-        if (now - moleTriggerCooldown[i] < 600) continue; // Cool down to avoid accidental rapid triggers
-
-        // Find actual pixel bounds of target hole
-        const holeContainer = document.getElementById(`mole-container-${i}`);
-        if (!holeContainer) continue;
-
-        const bounds = holeContainer.getBoundingClientRect();
-        const parentBounds = gameContainer.getBoundingClientRect();
-
-        // Convert DOM bounds to percentage within main game container
-        const holeLeft = ((bounds.left - parentBounds.left) / parentBounds.width) * 100;
-        const holeRight = ((bounds.right - parentBounds.left) / parentBounds.width) * 100;
-        const holeTop = ((bounds.top - parentBounds.top) / parentBounds.height) * 100;
-        const holeBottom = ((bounds.bottom - parentBounds.top) / parentBounds.height) * 100;
-
-        // Expanded strike radius for kid-friendly interaction
-        const paddingX = 4;
-        const paddingY = 4;
-
-        if (
-          xPercent >= (holeLeft - paddingX) && 
-          xPercent <= (holeRight + paddingX) &&
-          yPercent >= (holeTop - paddingY) && 
-          yPercent <= (holeBottom + paddingY)
-        ) {
-          // HIT CONFIRMED
-          moleTriggerCooldown[i] = now;
-          triggerHammerStrikeAnimation(handIndex);
-          whackMole(i);
+      // Stage 1 (Chewing gesture)
+      if (currentStageIndex === 0) {
+        // Calculate distance between thumb tip (4) and index tip (8)
+        const thumb = landmarks[4];
+        const index = landmarks[8];
+        const dist = Math.hypot(thumb.x - index.x, thumb.y - index.y, thumb.z - index.z);
+        
+        const now = Date.now();
+        if (dist < 0.08 && now - lastChewGestureTime > 350) {
+          lastChewGestureTime = now;
+          chewMouth();
         }
       }
     }
 
-    // Trigger visual hammer swinging
-    function triggerHammerStrikeAnimation(handIndex) {
-      const hammer = handIndex === 0 ? hammerLeft : hammerRight;
-      hammer.classList.add('hammer-strike');
-      setTimeout(() => {
-        hammer.classList.remove('hammer-strike');
-      }, 150);
-    }
-
-    // Init MediaPipe Hands Settings
-    const hands = new Hands({
+    const handsTracker = new Hands({
       locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
     });
 
-    hands.setOptions({
-      maxNumHands: 2,
-      modelComplexity: 0, // Lightweight for lower-end machines
+    handsTracker.setOptions({
+      maxNumHands: 1,
+      modelComplexity: 0,
       minDetectionConfidence: 0.5,
       minTrackingConfidence: 0.5
     });
 
-    hands.onResults(onResults);
+    handsTracker.onResults(onHandResults);
 
-    // Initialize Camera Feed
     async function initCamera() {
-      const statusLabel = document.getElementById('camera-loading-status');
-      const startBtn = document.getElementById('btn-start');
+      const statusLabel = document.getElementById('camera-status');
+      const okLabel = document.getElementById('camera-ok');
+      statusLabel.classList.remove('hidden');
       
       try {
         cameraInstance = new Camera(videoElement, {
           onFrame: async () => {
-            await hands.send({ image: videoElement });
+            await handsTracker.send({ image: videoElement });
           },
           width: 640,
           height: 480
         });
 
         await cameraInstance.start();
-        gameState = 'ready';
-        statusLabel.innerHTML = `<span class="text-green-400 font-bold"><i class="fa-solid fa-circle-check"></i> กล้องพร้อมใช้งานแล้ว!</span>`;
-        startBtn.disabled = false;
-        startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        statusLabel.classList.add('hidden');
+        okLabel.classList.remove('hidden');
       } catch (err) {
-        console.error("Camera initialize error: ", err);
-        statusLabel.innerHTML = `<span class="text-amber-300"><i class="fa-solid fa-exclamation-triangle"></i> อุปกรณ์ไม่พบบนเว็บแคม หรือเบราว์เซอร์ไม่ได้รับอนุญาตสิทธิ์กล้อง</span>`;
-        // Allow starting the game anyway with click simulation
-        gameState = 'ready';
-        startBtn.disabled = false;
-        startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        console.error("Camera fail:", err);
+        statusLabel.innerHTML = `<span class="text-red-500 font-bold"><i class="fa-solid fa-triangle-exclamation"></i> ไม่พบกล้องหรือเชื่อมต่อล้มเหลว</span>`;
       }
     }
+  </script>
 
-    // --- 5. GAME ENGINE CORE LOGIC ---
+  <script>
+    // --- 4. GAME PLAY MECHANICS & STAGES LOGIC ---
+    const canvas = document.getElementById('stage-interactive-canvas');
+    let stageEntities = [];
+    let stageScore = 0;
 
-    // Cache elements
-    for (let i = 0; i < 9; i++) {
-      activeMoles[i].element = document.getElementById(`mole-${i}`);
-      activeMoles[i].wordElement = document.getElementById(`mole-word-${i}`);
-    }
-
-    // Generate Floating Point Effects
-    function triggerScorePop(holeIndex, isCorrect, valueText) {
-      const parent = gameContainer;
-      const hole = document.getElementById(`mole-container-${holeIndex}`);
-      if (!hole) return;
-
-      const hBounds = hole.getBoundingClientRect();
-      const pBounds = parent.getBoundingClientRect();
-
-      // Find relative X,Y
-      const relativeX = hBounds.left + hBounds.width / 2 - pBounds.left;
-      const relativeY = hBounds.top + hBounds.height / 3 - pBounds.top;
-
-      const popEl = document.createElement('div');
-      popEl.className = `absolute z-50 font-extrabold text-3xl sm:text-5xl floating-score select-none pointer-events-none drop-shadow-lg`;
-      popEl.style.left = `${relativeX}px`;
-      popEl.style.top = `${relativeY}px`;
+    // Master function to render and configure each digestive stage
+    function setupActiveStage(stageIdx) {
+      stageEntities = [];
+      stageScore = 0;
+      currentStageTimerValue = 35;
       
-      if (isCorrect) {
-        popEl.innerHTML = `<span class="text-emerald-500 font-black">+${valueText}</span>`;
-      } else {
-        popEl.innerHTML = `<span class="text-red-500 font-black">${valueText}</span>`;
-      }
+      const config = STAGE_CONFIGS[stageIdx];
+      document.getElementById('game-stage-indicator').textContent = config.name;
+      document.getElementById('stage-controls-hint').textContent = config.targetHint;
+      document.getElementById('game-score').textContent = "0";
 
-      parent.appendChild(popEl);
-      setTimeout(() => popEl.remove(), 800);
+      // Highlight corresponding anatomy organ on map screen
+      resetMapHighlights();
+      let mapPart = null;
+      if (stageIdx === 0) mapPart = document.getElementById('map-mouth');
+      if (stageIdx === 1) mapPart = document.getElementById('map-esophagus');
+      if (stageIdx === 2) mapPart = document.getElementById('map-stomach');
+      if (stageIdx === 3) mapPart = document.getElementById('map-small');
+      if (stageIdx === 4) mapPart = document.getElementById('map-large');
+      if (mapPart) mapPart.classList.add('organ-active');
+
+      // Setup organic assets inside the stage interactive canvas
+      initializeStageAssets(stageIdx);
     }
 
-    // Trigger mole popping up
-    function spawnMole() {
-      if (gameState !== 'playing') return;
-
-      // Find all idle holes
-      const idleHoles = [];
-      for (let i = 0; i < 9; i++) {
-        if (!activeMoles[i].active) idleHoles.push(i);
-      }
-
-      if (idleHoles.length === 0) return;
-
-      // Select random hole
-      const randomHole = idleHoles[Math.floor(Math.random() * idleHoles.length)];
-      const mole = activeMoles[randomHole];
-
-      // Decide if it's Kokaa (55% probability) or Spelled word (45%)
-      const isKoka = Math.random() < 0.55;
-      const wordSource = isKoka ? KOKA_WORDS : SPELL_WORDS;
-      const selectedWord = wordSource[Math.floor(Math.random() * wordSource.length)];
-
-      mole.active = true;
-      mole.word = selectedWord;
-      mole.isKoka = isKoka;
-
-      // Apply initial styling to word tag
-      mole.wordElement.textContent = selectedWord;
-      mole.wordElement.className = "bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors";
-
-      // Animate Pop up
-      mole.element.style.transform = "translateY(0%)";
-      playSound('pop');
-
-      // Adaptive timings based on remaining clock (harder as time runs low)
-      let displayDuration = 1800; // Default slow pop
-      if (timeRemaining < 20) {
-        displayDuration = 1000;  // Ultra fast
-      } else if (timeRemaining < 40) {
-        displayDuration = 1400;  // Medium
-      }
-
-      // Automatically hide mole after delay if not hit
-      mole.hideTimeout = setTimeout(() => {
-        hideMole(randomHole);
-      }, displayDuration);
+    function resetMapHighlights() {
+      ['map-mouth', 'map-esophagus', 'map-stomach', 'map-small', 'map-large'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('organ-active');
+      });
     }
 
-    // Clear and hide mole
-    function hideMole(index) {
-      const mole = activeMoles[index];
-      if (!mole) return;
+    // Dynamic initializers for inside the canvas
+    function initializeStageAssets(idx) {
+      canvas.innerHTML = ''; // Clear previous SVG contents
+      
+      if (idx === 0) {
+        // --- STAGE 1: MOUTH (เคี้ยวสลายแป้ง) ---
+        // Spawn 10 big circular Starch molecules (แป้ง)
+        for (let i = 0; i < 8; i++) {
+          stageEntities.push({
+            id: i,
+            x: 150 + Math.random() * 500,
+            y: 100 + Math.random() * 300,
+            r: 35,
+            health: 3, // Needs 3 chews to turn into glucose
+            type: 'starch',
+            color: '#facc15'
+          });
+        }
+      } 
+      else if (idx === 1) {
+        // --- STAGE 2: ESOPHAGUS (บีบตัวเพอริสทัลซิส) ---
+        // Food bolus falling down slowly
+        stageEntities.push({
+          id: 'bolus',
+          x: 400,
+          y: 60,
+          r: 25,
+          speed: 1.5,
+          type: 'bolus'
+        });
 
-      mole.element.style.transform = "translateY(100%)";
-      mole.active = false;
-      if (mole.hideTimeout) {
-        clearTimeout(mole.hideTimeout);
-        mole.hideTimeout = null;
+        // Left and Right squeeze nodes
+        for (let i = 0; i < 5; i++) {
+          stageEntities.push({
+            id: `squeeze-${i}`,
+            y: 120 + i * 80,
+            active: Math.random() < 0.5,
+            activeSide: Math.random() < 0.5 ? 'left' : 'right',
+            type: 'trigger-wall'
+          });
+        }
       }
+      else if (idx === 2) {
+        // --- STAGE 3: STOMACH (ย่อยโปรตีนด้วยกรด) ---
+        // Dropper tool controlled by player
+        stageEntities.push({
+          id: 'dropper',
+          x: 400,
+          y: 80,
+          type: 'dropper'
+        });
+
+        // Spawn Proteins
+        for (let i = 0; i < 10; i++) {
+          stageEntities.push({
+            id: `protein-${i}`,
+            x: 100 + Math.random() * 600,
+            y: 180 + Math.random() * 250,
+            r: 22,
+            digested: false,
+            type: 'protein'
+          });
+        }
+      }
+      else if (idx === 3) {
+        // --- STAGE 4: SMALL INTESTINE (ดูดซึมสารอาหาร) ---
+        // Controlled basket receptor at bottom
+        stageEntities.push({
+          id: 'villi-basket',
+          x: 400,
+          y: 440,
+          w: 120,
+          h: 20,
+          type: 'receptor'
+        });
+
+        // Spawning falling nutrients
+        spawnFallingNutrient();
+      }
+      else if (idx === 4) {
+        // --- STAGE 5: LARGE INTESTINE (ดูดซึมน้ำ) ---
+        // Spawn water droplets and fecal blocks
+        for (let i = 0; i < 15; i++) {
+          stageEntities.push({
+            id: `water-${i}`,
+            x: 80 + Math.random() * 640,
+            y: 100 + Math.random() * 320,
+            r: 15,
+            absorbed: false,
+            type: 'water'
+          });
+        }
+      }
+
+      drawStageFrame();
     }
 
-    // Action of whacking a mole
-    function whackMole(index) {
-      const mole = activeMoles[index];
-      if (!mole || !mole.active) return;
+    // Spawn falling elements for Stage 4
+    function spawnFallingNutrient() {
+      if (currentStageIndex !== 3 || !gameActive) return;
+      const nutrientTypes = [
+        { name: 'กลูโคส', color: '#10b981', symbol: 'G' },
+        { name: 'อะมิโน', color: '#ef4444', symbol: 'A' },
+        { name: 'กรดไขมัน', color: '#f59e0b', symbol: 'F' }
+      ];
 
-      const word = mole.word;
-      const isCorrect = mole.isKoka;
+      const chosen = nutrientTypes[Math.floor(Math.random() * nutrientTypes.length)];
+      stageEntities.push({
+        id: `nut-${Date.now()}-${Math.random()}`,
+        x: 50 + Math.random() * 700,
+        y: 20,
+        r: 18,
+        speed: 2 + Math.random() * 3,
+        details: chosen,
+        type: 'nutrient'
+      });
 
-      // Disable active state so it cannot be hit multiple times
-      mole.active = false;
-      if (mole.hideTimeout) {
-        clearTimeout(mole.hideTimeout);
-        mole.hideTimeout = null;
-      }
+      // Keep spawning every 1.5 seconds
+      setTimeout(spawnFallingNutrient, 1500);
+    }
+  </script>
 
-      // Sound and Score visual Feedback
-      if (isCorrect) {
-        score += 10;
-        totalHits++;
-        playSound('hit-correct');
-        mole.wordElement.className = "bg-emerald-500 text-white border-3 border-emerald-700 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center";
-        triggerScorePop(index, true, "10");
-      } else {
-        score = Math.max(0, score - 5); // Score floors at 0
-        totalMisses++;
-        playSound('hit-wrong');
-        mole.wordElement.className = "bg-red-500 text-white border-3 border-red-700 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center animate-shake";
-        triggerScorePop(index, false, "-5");
-      }
+  <script>
+    // --- 5. CANVAS RENDER LOOP ---
+    function drawStageFrame() {
+      canvas.innerHTML = ''; // Fresh clear
 
-      // Update HUD
-      document.getElementById('hud-score').textContent = String(score).padStart(3, '0');
+      // Draw background decorations based on Stage
+      drawStageBackground();
 
-      // Fall back / Hide mole instantly inside ground
-      setTimeout(() => {
-        mole.element.style.transform = "translateY(100%)";
-      }, 300);
+      // Render all active entities inside SVG
+      stageEntities.forEach(ent => {
+        if (ent.type === 'starch') {
+          // Draw starch macromolecule (bunch of connected circles)
+          const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          g.setAttribute('class', 'cursor-pointer hover:opacity-80');
+          g.addEventListener('click', () => handleEntityWhack(ent.id));
+
+          const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          c.setAttribute('cx', ent.x);
+          c.setAttribute('cy', ent.y);
+          c.setAttribute('r', ent.r);
+          c.setAttribute('fill', ent.health === 3 ? '#b45309' : ent.health === 2 ? '#d97706' : '#fbbf24');
+          c.setAttribute('stroke', '#78350f');
+          c.setAttribute('stroke-width', '3');
+          g.appendChild(c);
+
+          // Word tag Amylase target
+          const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          t.setAttribute('x', ent.x);
+          t.setAttribute('y', ent.y + 4);
+          t.setAttribute('fill', 'white');
+          t.setAttribute('font-size', '12');
+          t.setAttribute('text-anchor', 'middle');
+          t.setAttribute('font-weight', 'bold');
+          t.textContent = ent.health > 1 ? "สารแป้ง" : "น้ำตาลคู่";
+          g.appendChild(t);
+          canvas.appendChild(g);
+        }
+        else if (ent.type === 'bolus') {
+          // Food Bolus inside Esophagus
+          const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          c.setAttribute('cx', ent.x);
+          c.setAttribute('cy', ent.y);
+          c.setAttribute('r', ent.r);
+          c.setAttribute('fill', '#ea580c');
+          c.setAttribute('stroke', '#7c2d12');
+          c.setAttribute('stroke-width', '4');
+          canvas.appendChild(c);
+        }
+        else if (ent.type === 'trigger-wall') {
+          // Left-Right esophageal muscles
+          const leftWall = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          leftWall.setAttribute('x', '0');
+          leftWall.setAttribute('y', ent.y - 15);
+          leftWall.setAttribute('width', ent.activeSide === 'left' && ent.active ? '150' : '100');
+          leftWall.setAttribute('height', '30');
+          leftWall.setAttribute('fill', ent.activeSide === 'left' && ent.active ? '#f43f5e' : '#fda4af');
+          leftWall.setAttribute('stroke', '#be123c');
+          leftWall.setAttribute('class', 'cursor-pointer');
+          leftWall.addEventListener('click', () => handleEsophagusWallClick(ent, 'left'));
+
+          const rightWall = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          rightWall.setAttribute('x', ent.activeSide === 'right' && ent.active ? '650' : '700');
+          rightWall.setAttribute('y', ent.y - 15);
+          rightWall.setAttribute('width', ent.activeSide === 'right' && ent.active ? '150' : '100');
+          rightWall.setAttribute('height', '30');
+          rightWall.setAttribute('fill', ent.activeSide === 'right' && ent.active ? '#f43f5e' : '#fda4af');
+          rightWall.setAttribute('stroke', '#be123c');
+          rightWall.setAttribute('class', 'cursor-pointer');
+          rightWall.addEventListener('click', () => handleEsophagusWallClick(ent, 'right'));
+
+          canvas.appendChild(leftWall);
+          canvas.appendChild(rightWall);
+        }
+        else if (ent.type === 'dropper') {
+          // Dropper for enzyme in Stomach
+          const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          r.setAttribute('x', ent.x - 30);
+          r.setAttribute('y', ent.y - 20);
+          r.setAttribute('width', '60');
+          r.setAttribute('height', '40');
+          r.setAttribute('rx', '10');
+          r.setAttribute('fill', '#64748b');
+          r.setAttribute('stroke', '#1e293b');
+          r.setAttribute('stroke-width', '3');
+          g.appendChild(r);
+
+          // Liquid drop simulation inside
+          const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          c.setAttribute('cx', ent.x);
+          c.setAttribute('cy', ent.y + 15);
+          c.setAttribute('r', '8');
+          c.setAttribute('fill', '#fbbf24');
+          g.appendChild(c);
+
+          canvas.appendChild(g);
+        }
+        else if (ent.type === 'protein') {
+          // Stomach Protein strands
+          const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          c.setAttribute('cx', ent.x);
+          c.setAttribute('cy', ent.y);
+          c.setAttribute('r', ent.r);
+          c.setAttribute('fill', ent.digested ? '#34d399' : '#f43f5e');
+          c.setAttribute('stroke', ent.digested ? '#064e3b' : '#9f1239');
+          c.setAttribute('stroke-width', '3');
+          c.setAttribute('class', 'cursor-pointer');
+          c.addEventListener('click', () => digestProtein(ent));
+          canvas.appendChild(c);
+
+          // Text marker
+          const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          t.setAttribute('x', ent.x);
+          t.setAttribute('y', ent.y + 4);
+          t.setAttribute('fill', 'white');
+          t.setAttribute('font-size', '10');
+          t.setAttribute('text-anchor', 'middle');
+          t.textContent = ent.digested ? "อะมิโน" : "โปรตีน";
+          canvas.appendChild(t);
+        }
+        else if (ent.type === 'receptor') {
+          // Nutrient gatherer
+          const r = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          r.setAttribute('x', ent.x - ent.w / 2);
+          r.setAttribute('y', ent.y);
+          r.setAttribute('width', ent.w);
+          r.setAttribute('height', ent.h);
+          r.setAttribute('rx', '8');
+          r.setAttribute('fill', '#34d399');
+          r.setAttribute('stroke', '#064e3b');
+          r.setAttribute('stroke-width', '3');
+          canvas.appendChild(r);
+
+          const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          t.setAttribute('x', ent.x);
+          t.setAttribute('y', ent.y + 14);
+          t.setAttribute('fill', 'white');
+          t.setAttribute('font-size', '10');
+          t.setAttribute('text-anchor', 'middle');
+          t.setAttribute('font-weight', 'bold');
+          t.textContent = "ปุ่มซึมวิลลัส (Villus)";
+          canvas.appendChild(t);
+        }
+        else if (ent.type === 'nutrient') {
+          // Digested bio nutrients falling down
+          const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          c.setAttribute('cx', ent.x);
+          c.setAttribute('cy', ent.y);
+          c.setAttribute('r', ent.r);
+          c.setAttribute('fill', ent.details.color);
+          c.setAttribute('stroke', '#1e293b');
+          c.setAttribute('stroke-width', '2');
+          canvas.appendChild(c);
+
+          const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          t.setAttribute('x', ent.x);
+          t.setAttribute('y', ent.y + 4);
+          t.setAttribute('fill', 'white');
+          t.setAttribute('font-size', '9');
+          t.setAttribute('text-anchor', 'middle');
+          t.setAttribute('font-weight', 'bold');
+          t.textContent = ent.details.symbol;
+          canvas.appendChild(t);
+        }
+        else if (ent.type === 'water') {
+          // Water drops for Large Intestine
+          const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+          g.setAttribute('class', 'cursor-pointer hover:opacity-80');
+          g.addEventListener('click', () => absorbWater(ent));
+
+          const c = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          // Water droplet curve shape representation
+          c.setAttribute('d', `M ${ent.x} ${ent.y - 20} C ${ent.x - 15} ${ent.y} ${ent.x + 15} ${ent.y} ${ent.x} ${ent.y - 20} Z`);
+          c.setAttribute('fill', ent.absorbed ? 'none' : '#60a5fa');
+          c.setAttribute('stroke', '#1d4ed8');
+          c.setAttribute('stroke-width', ent.absorbed ? '0' : '2');
+          g.appendChild(c);
+
+          if (!ent.absorbed) {
+            const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            t.setAttribute('x', ent.x);
+            t.setAttribute('y', ent.y - 2);
+            t.setAttribute('fill', '#1d4ed8');
+            t.setAttribute('font-size', '9');
+            t.setAttribute('text-anchor', 'middle');
+            t.textContent = "H2O";
+            g.appendChild(t);
+          }
+
+          canvas.appendChild(g);
+        }
+      });
     }
 
-    // Game loop timers
-    function startGameTimers() {
-      // Game Countdown Clock
-      timerInterval = setInterval(() => {
-        timeRemaining--;
-        const timerEl = document.getElementById('hud-timer');
-        const timerIcon = document.getElementById('timer-icon');
+    // Dynamic background drawings inside SVG to enrich gameplay visually
+    function drawStageBackground() {
+      if (currentStageIndex === 0) {
+        // Mouth interior outline (teeth on top and bottom)
+        const pathTop = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        pathTop.setAttribute('d', 'M 0 0 Q 400 120 800 0 L 800 40 L 0 40 Z');
+        pathTop.setAttribute('fill', '#fda4af');
+        canvas.appendChild(pathTop);
+
+        const pathBottom = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        pathBottom.setAttribute('d', 'M 0 500 Q 400 380 800 500 L 800 460 L 0 460 Z');
+        pathBottom.setAttribute('fill', '#fda4af');
+        canvas.appendChild(pathBottom);
+      }
+      else if (currentStageIndex === 1) {
+        // Esophagus tubular wall lining
+        const pathLeft = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        pathLeft.setAttribute('x', '0');
+        pathLeft.setAttribute('y', '0');
+        pathLeft.setAttribute('width', '100');
+        pathLeft.setAttribute('height', '500');
+        pathLeft.setAttribute('fill', '#fda4af');
+        canvas.appendChild(pathLeft);
+
+        const pathRight = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        pathRight.setAttribute('x', '700');
+        pathRight.setAttribute('y', '0');
+        pathRight.setAttribute('width', '100');
+        pathRight.setAttribute('height', '500');
+        pathRight.setAttribute('fill', '#fda4af');
+        canvas.appendChild(pathRight);
+      }
+      else if (currentStageIndex === 2) {
+        // Stomach interior landscape (gastric juice liquid at bottom)
+        const pathAcid = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        pathAcid.setAttribute('d', 'M 0 420 Q 200 400 400 430 T 800 420 L 800 500 L 0 500 Z');
+        pathAcid.setAttribute('fill', 'rgba(234, 179, 8, 0.4)');
+        canvas.appendChild(pathAcid);
+      }
+    }
+  </script>
+
+  <script>
+    // --- 6. PLAYER ACTIONS & COLLISION HANDLERS ---
+    
+    // Whack starch molecule (Stage 1 Mouth)
+    function handleEntityWhack(id) {
+      if (currentStageIndex !== 0 || !gameActive) return;
+      
+      const ent = stageEntities.find(e => e.id === id);
+      if (ent && ent.health > 0) {
+        ent.health--;
+        playSound('chew');
         
-        timerEl.textContent = `${timeRemaining}s`;
+        if (ent.health === 0) {
+          // Starched breaks down completely to glucose!
+          stageScore += 20;
+          totalScore += 20;
+          finalNutrientCount++;
+          document.getElementById('game-score').textContent = stageScore;
+          playSound('correct');
+          
+          // Remove from pool
+          stageEntities = stageEntities.filter(e => e.id !== id);
+          
+          // Win condition check for Stage 1
+          if (stageEntities.length === 0) {
+            triggerStageClearQuiz();
+          }
+        }
+        drawStageFrame();
+      }
+    }
 
-        // 10-second warnings (blink and audio beeps)
-        if (timeRemaining <= 10) {
-          timerEl.classList.add('text-red-500', 'pulse-time-limit');
-          timerIcon.classList.add('text-red-500', 'animate-pulse');
-          playSound('time-low');
-        } else {
-          timerEl.classList.remove('text-red-500', 'pulse-time-limit');
-          timerIcon.classList.remove('text-red-500', 'animate-pulse');
+    // Trigger mouth chewing Fallback
+    function chewMouth() {
+      // Find any nearest starch and chew it automatically
+      const target = stageEntities.find(e => e.type === 'starch' && e.health > 0);
+      if (target) {
+        handleEntityWhack(target.id);
+      }
+    }
+
+    // Squeeze walls for Esophagus (Stage 2)
+    function handleEsophagusWallClick(wallEnt, side) {
+      if (currentStageIndex !== 1 || !gameActive) return;
+
+      const bolus = stageEntities.find(e => e.type === 'bolus');
+      if (!bolus) return;
+
+      // Squeezing pushing bolus further down
+      if (wallEnt.active && wallEnt.activeSide === side) {
+        // Match squeeze! Push down
+        bolus.y += 60;
+        playSound('swallow');
+        wallEnt.active = false; // complete trigger
+        
+        // Spawn/Activate next random wall trigger
+        const inactive = stageEntities.filter(e => e.type === 'trigger-wall' && !e.active);
+        if (inactive.length > 0) {
+          inactive[Math.floor(Math.random() * inactive.length)].active = true;
         }
 
-        if (timeRemaining <= 0) {
-          endGame();
+        stageScore += 15;
+        totalScore += 15;
+        document.getElementById('game-score').textContent = stageScore;
+
+        if (bolus.y >= 460) {
+          // Food successfully navigated to stomach!
+          playSound('correct');
+          triggerStageClearQuiz();
+        }
+        drawStageFrame();
+      } else {
+        // Wrong wall squeezed!
+        playSound('incorrect');
+      }
+    }
+
+    // Protein enzymatic digestion (Stage 3 Stomach)
+    function digestProtein(ent) {
+      if (currentStageIndex !== 2 || !gameActive) return;
+
+      if (!ent.digested) {
+        ent.digested = true;
+        stageScore += 15;
+        totalScore += 15;
+        finalNutrientCount++;
+        document.getElementById('game-score').textContent = stageScore;
+        playSound('absorb');
+
+        const activeProteins = stageEntities.filter(e => e.type === 'protein' && !e.digested);
+        if (activeProteins.length === 0) {
+          triggerStageClearQuiz();
+        }
+        drawStageFrame();
+      }
+    }
+
+    // Water absorption clicks (Stage 5 Large Intestine)
+    function absorbWater(ent) {
+      if (currentStageIndex !== 4 || !gameActive) return;
+
+      if (!ent.absorbed) {
+        ent.absorbed = true;
+        stageScore += 10;
+        totalScore += 10;
+        document.getElementById('game-score').textContent = stageScore;
+        playSound('absorb');
+
+        const unabsorbed = stageEntities.filter(e => e.type === 'water' && !e.absorbed);
+        if (unabsorbed.length === 0) {
+          triggerStageClearQuiz();
+        }
+        drawStageFrame();
+      }
+    }
+  </script>
+
+  <script>
+    // --- 7. PHYSICAL ENGINE LOOPS (Gravity, Falling Particles) ---
+    function startPhysicsLoop() {
+      gameLoopInterval = setInterval(() => {
+        if (!gameActive) return;
+
+        // Stage 3 (Stomach Dropper tracking and auto-digest)
+        if (currentStageIndex === 2) {
+          const dropper = stageEntities.find(e => e.type === 'dropper');
+          if (dropper) {
+            // Track player pointer
+            const targetX = activeControlMode === 'camera' ? lastKnownHandX : lastPlayerMouseX;
+            dropper.x += (targetX - dropper.x) * 0.2; // Smooth damping
+          }
+        }
+
+        // Stage 4 (Small Intestine Absorption physics)
+        if (currentStageIndex === 3) {
+          const basket = stageEntities.find(e => e.type === 'receptor');
+          if (basket) {
+            // Track pointer
+            const targetX = activeControlMode === 'camera' ? lastKnownHandX : lastPlayerMouseX;
+            basket.x += (targetX - basket.x) * 0.25;
+            
+            // Keep boundary constraints
+            basket.x = Math.max(basket.w / 2, Math.min(800 - basket.w / 2, basket.x));
+          }
+
+          // Handle falling items
+          stageEntities.forEach(ent => {
+            if (ent.type === 'nutrient') {
+              ent.y += ent.speed;
+
+              // Check absorb boundaries with Basket
+              if (basket && ent.y >= basket.y - 15 && ent.y <= basket.y + 10) {
+                if (ent.x >= basket.x - basket.w/2 && ent.x <= basket.x + basket.w/2) {
+                  // Catch match!
+                  stageScore += 20;
+                  totalScore += 20;
+                  finalNutrientCount++;
+                  document.getElementById('game-score').textContent = stageScore;
+                  playSound('absorb');
+                  
+                  // Filter entity
+                  stageEntities = stageEntities.filter(e => e.id !== ent.id);
+                  
+                  // Check score goal to pass stage 4
+                  if (stageScore >= 160) {
+                    triggerStageClearQuiz();
+                  }
+                }
+              }
+
+              // Drop out of boundary check
+              if (ent.y > 510) {
+                stageEntities = stageEntities.filter(e => e.id !== ent.id);
+              }
+            }
+          });
+        }
+
+        drawStageFrame();
+      }, 30);
+    }
+
+    let lastPlayerMouseX = 400;
+    // Mouse tracking fallback inside canvas coordinates
+    document.getElementById('stage-interactive-canvas').addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const relativeX = ((e.clientX - rect.left) / rect.width) * 800;
+      lastPlayerMouseX = relativeX;
+
+      // Handle automatic chewing trigger for Mouse on hover (Stage 1)
+      if (currentStageIndex === 0 && gameActive) {
+        stageEntities.forEach(ent => {
+          if (ent.type === 'starch') {
+            const dist = Math.hypot(relativeX - ent.x, ((e.clientY - rect.top) / rect.height) * 500 - ent.y);
+            if (dist < ent.r) {
+              handleEntityWhack(ent.id);
+            }
+          }
+        });
+      }
+    });
+  </script>
+
+  <script>
+    // --- 8. GAME OVERALL SCREEN TRANSITIONS & CONTROL CONFIGS ---
+    
+    // Mouse Mode Selector
+    document.getElementById('ctrl-mouse').addEventListener('click', () => {
+      activeControlMode = 'mouse';
+      document.getElementById('ctrl-mouse').className = "border-2 border-amber-500 bg-amber-50 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer transition transform scale-105";
+      document.getElementById('ctrl-ar').className = "border-2 border-slate-200 bg-slate-50 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer transition transform hover:scale-105 active:scale-95";
+      document.getElementById('ar-cam-preview-container').classList.add('hidden');
+    });
+
+    // AR Mode Selector
+    document.getElementById('ctrl-ar').addEventListener('click', () => {
+      activeControlMode = 'camera';
+      document.getElementById('ctrl-ar').className = "border-2 border-amber-500 bg-amber-50 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer transition transform scale-105";
+      document.getElementById('ctrl-mouse').className = "border-2 border-slate-200 bg-slate-50 rounded-xl p-3 flex flex-col items-center justify-center cursor-pointer transition transform hover:scale-105 active:scale-95";
+      document.getElementById('ar-cam-preview-container').classList.remove('hidden');
+      initCamera();
+    });
+
+    // Main Start Game Button
+    document.getElementById('btn-start-game').addEventListener('click', () => {
+      document.getElementById('screen-start').classList.add('hidden');
+      showOrganMapOverview();
+    });
+
+    function showOrganMapOverview() {
+      const config = STAGE_CONFIGS[currentStageIndex];
+      document.getElementById('map-organ-title').textContent = config.title;
+      document.getElementById('map-organ-desc').textContent = config.desc;
+      
+      document.getElementById('screen-map').classList.remove('hidden');
+      document.getElementById('screen-gameplay').classList.add('hidden');
+      document.getElementById('screen-quiz').classList.add('hidden');
+    }
+
+    // Launch active stage screen
+    document.getElementById('btn-start-stage').addEventListener('click', () => {
+      document.getElementById('screen-map').classList.add('hidden');
+      document.getElementById('screen-gameplay').classList.remove('hidden');
+      
+      setupActiveStage(currentStageIndex);
+      launchTimerHUD();
+      gameActive = true;
+      startPhysicsLoop();
+    });
+
+    // Timer HUD logic loop
+    function launchTimerHUD() {
+      clearInterval(gameplayTimer);
+      gameplayTimer = setInterval(() => {
+        if (!gameActive) return;
+        currentStageTimerValue--;
+        
+        const timeLabel = document.getElementById('game-timer');
+        const icon = document.getElementById('game-timer-icon');
+        timeLabel.textContent = `${currentStageTimerValue}s`;
+
+        if (currentStageTimerValue <= 8) {
+          timeLabel.classList.add('text-red-500', 'pulse-time-limit');
+          icon.classList.add('text-red-500', 'animate-pulse');
+          playSound('time_low');
+        } else {
+          timeLabel.classList.remove('text-red-500', 'pulse-time-limit');
+          icon.classList.remove('text-red-500', 'animate-pulse');
+        }
+
+        if (currentStageTimerValue <= 0) {
+          // Time expired! Navigate quiz anyway
+          triggerStageClearQuiz();
         }
       }, 1000);
+    }
 
-      // Mole Spawning Interval (Increases density as clock runs down)
-      function spawnManager() {
-        if (gameState !== 'playing') return;
+    // Stage cleared! Open trivia/quiz challenge
+    function triggerStageClearQuiz() {
+      gameActive = false;
+      clearInterval(gameplayTimer);
+      clearInterval(gameLoopInterval);
 
-        spawnMole();
+      const config = STAGE_CONFIGS[currentStageIndex];
+      document.getElementById('quiz-question').textContent = config.quiz.q;
+      
+      // Inject choices
+      for (let i = 0; i < 3; i++) {
+        const choiceBtn = document.getElementById(`choice-${i}`);
+        document.getElementById(`choice-text-${i}`).textContent = config.quiz.choices[i];
+        
+        // Reset color tags
+        choiceBtn.className = "border-2 border-slate-200 hover:border-teal-500 hover:bg-teal-50 active:scale-98 rounded-xl p-3.5 flex items-center gap-3 transition cursor-pointer w-full text-left";
+        
+        // Click callback
+        choiceBtn.onclick = () => verifyQuizAnswer(i, config.quiz.correct);
+      }
 
-        // Dynamically compute next delay to increase difficulty
-        let nextSpawnDelay = 1200;
-        if (timeRemaining < 20) {
-          nextSpawnDelay = 600;  // High frequency spawning
-        } else if (timeRemaining < 40) {
-          nextSpawnDelay = 900;  // Medium frequency
+      document.getElementById('screen-gameplay').classList.add('hidden');
+      document.getElementById('screen-quiz').classList.remove('hidden');
+    }
+
+    // Check quiz answers
+    function verifyQuizAnswer(selected, correct) {
+      const isCorrect = selected === correct;
+      
+      // Highlight selections
+      for (let i = 0; i < 3; i++) {
+        const btn = document.getElementById(`choice-${i}`);
+        if (i === correct) {
+          btn.className = "border-2 border-green-500 bg-green-50 rounded-xl p-3.5 flex items-center gap-3 w-full text-left";
+        } else if (i === selected) {
+          btn.className = "border-2 border-red-500 bg-red-50 rounded-xl p-3.5 flex items-center gap-3 w-full text-left";
         }
-
-        moleInterval = setTimeout(spawnManager, nextSpawnDelay);
       }
 
-      // Trigger initial loop
-      moleInterval = setTimeout(spawnManager, 800);
-    }
-
-    // Start Game
-    function startGame() {
-      // Re-enable audio context (Browser security requirements)
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-
-      gameState = 'playing';
-      score = 0;
-      timeRemaining = 60;
-      totalHits = 0;
-      totalMisses = 0;
-
-      // Update HUD displays
-      document.getElementById('hud-score').textContent = "000";
-      document.getElementById('hud-timer').textContent = "60s";
-
-      // Hide start screen and show gameplay
-      document.getElementById('start-screen').classList.add('hidden');
-      document.getElementById('gameplay-screen').classList.remove('hidden');
-      document.getElementById('game-over-screen').classList.add('hidden');
-
-      startGameTimers();
-    }
-
-    // End Game
-    function endGame() {
-      gameState = 'ended';
-      playSound('game-over');
-
-      // Clear timers
-      clearInterval(timerInterval);
-      clearTimeout(moleInterval);
-
-      // Force-hide all moles
-      for (let i = 0; i < 9; i++) {
-        hideMole(i);
-      }
-
-      // Populate final analytics screen
-      document.getElementById('final-score').textContent = score;
-      document.getElementById('final-hits').textContent = `${totalHits} ครั้ง`;
-      document.getElementById('final-misses').textContent = `${totalMisses} ครั้ง`;
-
-      // Custom evaluation text
-      const evalText = document.getElementById('score-evaluation');
-      if (score >= 200) {
-        evalText.innerHTML = `<span class="text-yellow-400"><i class="fa-solid fa-medal mr-1"></i>สุดยอดอัจฉริยะ!</span> แชมป์เปี้ยนตัวต่อวิทยากรแยกแยะหลักภาษาตัวจริง!`;
-      } else if (score >= 100) {
-        evalText.innerHTML = `<span class="text-green-300"><i class="fa-solid fa-thumbs-up mr-1"></i>เก่งมากเลย!</span> เด็กๆ มีความเข้าใจหลักการผันคำแม่ ก กา ที่ดีเยี่ยม!`;
+      if (isCorrect) {
+        playSound('correct');
+        totalScore += 50; // Bonus score
+        finalAnswerCount++;
       } else {
-        evalText.innerHTML = `เก่งมากที่พยายาม! มาเล่นบ่อยๆ เพื่อพัฒนาภาษาไทยของเราให้แข็งแรงขึ้นกันนะ`;
+        playSound('incorrect');
       }
 
-      // Show screens
-      document.getElementById('gameplay-screen').classList.add('hidden');
-      document.getElementById('game-over-screen').classList.remove('hidden');
+      // Auto transition to next screen after 2.2 seconds
+      setTimeout(() => {
+        moveToNextStageProgress();
+      }, 2200);
     }
 
-    // --- 6. INTERACTIVE EVENT HANDLERS & FALLBACKS ---
+    // Move along organ system
+    function moveToNextStageProgress() {
+      // Progress dot update
+      const activeDot = document.getElementById(`prog-${currentStageIndex}`);
+      if (activeDot) {
+        activeDot.classList.remove('bg-white/30');
+        activeDot.classList.add('bg-emerald-400');
+      }
 
-    // Click on Mole Fallback (For testing & systems without camera)
-    for (let i = 0; i < 9; i++) {
-      const container = document.getElementById(`mole-container-${i}`);
-      container.addEventListener('mousedown', (e) => {
-        if (gameState === 'playing') {
-          whackMole(i);
-        }
-      });
-      container.addEventListener('touchstart', (e) => {
-        if (gameState === 'playing') {
-          e.preventDefault(); // Stop double trigger on mobile tap
-          whackMole(i);
-        }
-      });
+      currentStageIndex++;
+      
+      if (currentStageIndex < STAGE_CONFIGS.length) {
+        // Continue to next Organ map
+        showOrganMapOverview();
+      } else {
+        // Complete victory!
+        displayFinalGameReport();
+      }
     }
 
-    // Setup interactive Buttons
-    document.getElementById('btn-start').addEventListener('click', () => {
-      startGame();
-    });
+    function displayFinalGameReport() {
+      document.getElementById('screen-quiz').classList.add('hidden');
+      document.getElementById('screen-end').classList.remove('hidden');
 
+      document.getElementById('final-score').textContent = totalScore;
+      document.getElementById('final-nutrients').textContent = `${finalNutrientCount} ชิ้น`;
+      document.getElementById('final-correct-answers').textContent = `${finalAnswerCount} / 5 ข้อ`;
+    }
+
+    // Restart game trigger
     document.getElementById('btn-restart').addEventListener('click', () => {
-      startGame();
-    });
+      currentStageIndex = 0;
+      totalScore = 0;
+      finalAnswerCount = 0;
+      finalNutrientCount = 0;
 
-    // Window Init Hook
-    window.onload = function() {
-      initCamera();
-    }
+      // Reset HUD progress dots
+      for (let i = 0; i < 5; i++) {
+        const dot = document.getElementById(`prog-${i}`);
+        if (dot) {
+          dot.className = "w-2.5 h-2.5 rounded-full bg-white/30";
+        }
+      }
+
+      document.getElementById('screen-end').classList.add('hidden');
+      showOrganMapOverview();
+    });
   </script>
 </body>
 </html>
