@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เกมตีตัวตุ่น แม่ ก กา - สื่อการเรียนรู้วิทยาศาสตร์และภาษาไทย</title>
+  
+  <!-- Google Fonts: Kanit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Font Awesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- MediaPipe Hands CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            kanit: ['Kanit', 'sans-serif'],
+          },
+          colors: {
+            sky: {
+              light: '#e0f2fe',
+              DEFAULT: '#38bdf8',
+              dark: '#0284c7',
+            },
+            grass: {
+              light: '#4ade80',
+              DEFAULT: '#22c55e',
+              dark: '#15803d',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Kanit', sans-serif;
+      overflow-x: hidden;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    /* Custom 3D wooden boards */
+    .wooden-board {
+      background: linear-gradient(135deg, #854d0e 0%, #a16207 100%);
+      border: 4px solid #451a03;
+      box-shadow: 0 8px 0 #451a03, 0 15px 20px rgba(0,0,0,0.3);
+      text-shadow: 2px 2px 0px #451a03;
+    }
+
+    .wooden-btn {
+      background: linear-gradient(to bottom, #ea580c 0%, #c2410c 100%);
+      border: 3px solid #431407;
+      box-shadow: 0 6px 0 #431407, 0 10px 15px rgba(0,0,0,0.3);
+      transition: all 0.1s ease;
+    }
+
+    .wooden-btn:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #431407, 0 5px 10px rgba(0,0,0,0.3);
+    }
+
+    /* Grass field perspective */
+    .game-field {
+      perspective: 1000px;
+    }
+
+    .mole-hole {
+      background: radial-gradient(circle, #3f220f 40%, #1c0e06 100%);
+      box-shadow: inset 0 8px 15px rgba(0,0,0,0.6), 0 5px 0px #15803d;
+    }
+
+    /* Animations */
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    .bounce-ui {
+      animation: bounce 2s infinite ease-in-out;
+    }
+
+    @keyframes pulse-red {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.1); opacity: 0.8; color: #ef4444; }
+    }
+    .pulse-time-limit {
+      animation: pulse-red 0.8s infinite;
+    }
+
+    /* Flash feedback */
+    @keyframes score-up {
+      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translate(-50%, -120px) scale(1.5); opacity: 0; }
+    }
+    .floating-score {
+      animation: score-up 0.8s forwards ease-out;
+    }
+
+    /* Hand pointer hammer styling */
+    .hammer-cursor {
+      pointer-events: none;
+      transform-origin: bottom left;
+      transition: transform 0.05s ease;
+    }
+    .hammer-strike {
+      transform: rotate(-45deg) scale(1.2) !important;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-b from-sky-300 via-sky-100 to-emerald-200 min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
+
+  <!-- ==================== MAIN GAME CONTAINER ==================== -->
+  <div class="relative w-full max-w-6xl aspect-[16/10] bg-gradient-to-b from-sky-400 to-emerald-400 rounded-3xl overflow-hidden shadow-2xl border-8 border-white/80 flex flex-col justify-between">
+    
+    <!-- BACKGROUND ART (Sky & Clouds) -->
+    <div class="absolute inset-0 z-0 pointer-events-none">
+      <!-- Sun -->
+      <div class="absolute top-6 right-8 w-16 h-16 sm:w-24 sm:h-24 bg-amber-400 rounded-full blur-xs shadow-inner animate-pulse"></div>
+      <!-- Clouds -->
+      <div class="absolute top-10 left-[10%] w-24 h-8 bg-white/70 rounded-full blur-xs animate-bounce" style="animation-duration: 6s;"></div>
+      <div class="absolute top-16 right-[25%] w-32 h-10 bg-white/80 rounded-full blur-xs animate-bounce" style="animation-duration: 8s;"></div>
+    </div>
+
+    <!-- ==================== 1. START SCREEN ==================== -->
+    <div id="start-screen" class="absolute inset-0 z-40 bg-gradient-to-b from-sky-300/90 to-emerald-600/90 flex flex-col items-center justify-between p-4 sm:p-8 text-center">
+      
+      <!-- Logo Header -->
+      <div class="wooden-board text-white rounded-2xl px-6 py-4 max-w-2xl mt-2 sm:mt-6 bounce-ui">
+        <h1 class="text-[clamp(1.5rem,4vw,3.2rem)] font-extrabold tracking-wider leading-tight">
+          <i class="fa-solid fa-gavel mr-2 text-yellow-300"></i>เกมตีตัวตุ่น แม่ ก กา
+        </h1>
+        <p class="text-[clamp(0.8rem,1.8vw,1.2rem)] font-light text-yellow-200 mt-1">
+          ฝึกแยกแยะคำศัพท์ภาษาไทย ชนะใจระบบย่อยอาหารอันแสนสนุก!
+        </p>
+      </div>
+
+      <!-- Instructions Container -->
+      <div class="w-full max-w-4xl bg-white/95 rounded-2xl p-4 sm:p-6 shadow-xl border-4 border-yellow-400 flex flex-col md:flex-row gap-4 items-center justify-center my-2">
+        
+        <!-- Left: Quick Info -->
+        <div class="flex-1 space-y-3 text-left">
+          <h2 class="text-xl sm:text-2xl font-bold text-slate-800 border-b-2 border-dashed border-emerald-500 pb-1">
+            <i class="fa-solid fa-gamepad text-emerald-600 mr-2"></i>กติกาและวิธีการเล่น
+          </h2>
+          
+          <div class="space-y-2 text-slate-700 text-[clamp(0.85rem,1.5vw,1.1rem)]">
+            <div class="flex items-start gap-2">
+              <span class="bg-emerald-500 text-white font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">1</span>
+              <p>เปิดใช้กล้อง <strong>ยกมือขึ้นให้กล้องเห็น</strong> จะมีค้อนไม้จำลองลอยตามปลายนิ้วชี้ของคุณ</p>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="bg-emerald-500 text-white font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">2</span>
+              <p>ขยับค้อนไปทุบตัวตุ่นที่ถือ <strong>"คำแม่ ก กา" (คำที่ไม่มีตัวสะกด)</strong> เท่านั้น</p>
+            </div>
+            <div class="flex items-start gap-2">
+              <span class="bg-emerald-500 text-white font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">3</span>
+              <p>ระวัง! <strong>ห้ามทุบคำที่มีตัวสะกด</strong> เด็ดขาดนะเด็กๆ!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Scoring Guide -->
+        <div class="grid grid-cols-2 gap-3 w-full md:w-auto shrink-0">
+          <div class="bg-emerald-50 border-2 border-emerald-500 rounded-xl p-3 text-center">
+            <span class="text-xs font-semibold text-emerald-700 block uppercase">ตีถูก (แม่ ก กา)</span>
+            <span class="text-2xl sm:text-3xl font-extrabold text-emerald-600">+10 คะแนน</span>
+            <span class="text-xs text-slate-500 block mt-1">เช่น ปลา, หมา, ปู, เสือ</span>
+          </div>
+          <div class="bg-red-50 border-2 border-red-400 rounded-xl p-3 text-center">
+            <span class="text-xs font-semibold text-red-700 block uppercase">ตีผิด (มีตัวสะกด)</span>
+            <span class="text-2xl sm:text-3xl font-extrabold text-red-600">-5 คะแนน</span>
+            <span class="text-xs text-slate-500 block mt-1">เช่น เดือน, นก, ลม, บ้าน</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Camera Authorization / Status Bar -->
+      <div id="camera-loading-status" class="text-white text-sm bg-black/40 px-4 py-2 rounded-full flex items-center gap-2">
+        <i class="fa-solid fa-circle-notch animate-spin text-yellow-300"></i>
+        <span>กำลังเตรียมระบบกล้องตรวจจับมือ... โปรดอนุญาตสิทธิ์การเข้าถึงกล้อง</span>
+      </div>
+
+      <!-- Start Button Area -->
+      <div class="mb-2 sm:mb-6">
+        <button id="btn-start" disabled class="wooden-btn text-white text-[clamp(1.2rem,3vw,2rem)] font-extrabold px-12 py-4 rounded-2xl cursor-not-allowed opacity-50 flex items-center gap-3">
+          <i class="fa-solid fa-play"></i> เริ่มเกมเลย!
+        </button>
+      </div>
+
+      <!-- Tiny mole graphics decorative -->
+      <div class="absolute bottom-4 right-6 w-12 sm:w-20 opacity-80 pointer-events-none">
+        <svg viewBox="0 0 100 100" class="w-full">
+          <path d="M20,90 C20,40 80,40 80,90 Z" fill="#78350f"/>
+          <circle cx="35" cy="60" r="6" fill="#000"/>
+          <circle cx="65" cy="60" r="6" fill="#000"/>
+          <ellipse cx="50" cy="70" rx="10" ry="6" fill="#f43f5e"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ==================== 2. GAMEPLAY SCREEN ==================== -->
+    <div id="gameplay-screen" class="hidden absolute inset-0 z-20 flex flex-col justify-between p-4 relative">
+      
+      <!-- HUD / Top Header -->
+      <div class="flex justify-between items-start z-30 pointer-events-none">
+        
+        <!-- Left: Timer board -->
+        <div class="wooden-board text-white rounded-xl px-4 py-2 flex items-center gap-3 min-w-[150px] sm:min-w-[180px]">
+          <i id="timer-icon" class="fa-solid fa-hourglass-half text-yellow-300 text-xl sm:text-2xl"></i>
+          <div>
+            <div class="text-[10px] sm:text-xs text-yellow-200">เวลาที่เหลือ</div>
+            <div id="hud-timer" class="text-2xl sm:text-3xl font-extrabold">60s</div>
+          </div>
+        </div>
+
+        <!-- Center: Hand Status Warning (Shows dynamically) -->
+        <div id="hand-lost-warning" class="bg-red-600/90 text-white border-2 border-white px-4 py-2 rounded-full flex items-center gap-2 text-xs sm:text-sm animate-bounce shadow-lg pointer-events-auto transition-all opacity-0">
+          <i class="fa-solid fa-hand-pointer text-yellow-300 animate-ping"></i>
+          <span>ยกมือของคุณขึ้นให้กล้องเห็น!</span>
+        </div>
+
+        <!-- Right: Score board -->
+        <div class="wooden-board text-white rounded-xl px-4 py-2 flex items-center gap-3 min-w-[150px] sm:min-w-[180px] justify-end">
+          <div class="text-right">
+            <div class="text-[10px] sm:text-xs text-yellow-200">คะแนนปัจจุบัน</div>
+            <div id="hud-score" class="text-2xl sm:text-3xl font-extrabold text-green-300">000</div>
+          </div>
+          <i class="fa-solid fa-trophy text-yellow-400 text-xl sm:text-2xl"></i>
+        </div>
+
+      </div>
+
+      <!-- MAIN GAME FIELD (Grid 3x3 of Mole Holes) -->
+      <div class="game-field flex-1 grid grid-cols-3 gap-2 sm:gap-4 max-w-4xl mx-auto w-full items-center justify-center py-4 z-10">
+        
+        <!-- Holes generated dynamically here or predefined -->
+        <!-- We will define 9 holes statically to make layout styling predictable and responsive -->
+        
+        <!-- Hole 0 -->
+        <div class="relative w-full aspect-square flex items-center justify-center">
+          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
+          <div id="mole-container-0" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
+            <!-- Mole representation -->
+            <div id="mole-0" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
+              <!-- Label bubble above mole head -->
+              <div id="mole-word-0" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">ปลา</div>
+              <!-- SVG Mole Character -->
+              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
+                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/> <!-- Body -->
+                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/> <!-- Inner belly -->
+                <!-- Eyes -->
+                <circle cx="38" cy="40" r="7" fill="#fff"/>
+                <circle cx="38" cy="40" r="3" fill="#000"/>
+                <circle cx="62" cy="40" r="7" fill="#fff"/>
+                <circle cx="62" cy="40" r="3" fill="#000"/>
+                <!-- Nose -->
+                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
+                <!-- Whiskers -->
+                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hole 1 -->
+        <div class="relative w-full aspect-square flex items-center justify-center">
+          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
+          <div id="mole-container-1" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
+            <div id="mole-1" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
+              <div id="mole-word-1" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">หมา</div>
+              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
+                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/>
+                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/>
+                <circle cx="38" cy="40" r="7" fill="#fff"/>
+                <circle cx="38" cy="40" r="3" fill="#000"/>
+                <circle cx="62" cy="40" r="7" fill="#fff"/>
+                <circle cx="62" cy="40" r="3" fill="#000"/>
+                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
+                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hole 2 -->
+        <div class="relative w-full aspect-square flex items-center justify-center">
+          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
+          <div id="mole-container-2" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
+            <div id="mole-2" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
+              <div id="mole-word-2" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">ตา</div>
+              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
+                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/>
+                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/>
+                <circle cx="38" cy="40" r="7" fill="#fff"/>
+                <circle cx="38" cy="40" r="3" fill="#000"/>
+                <circle cx="62" cy="40" r="7" fill="#fff"/>
+                <circle cx="62" cy="40" r="3" fill="#000"/>
+                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
+                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hole 3 -->
+        <div class="relative w-full aspect-square flex items-center justify-center">
+          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
+          <div id="mole-container-3" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
+            <div id="mole-3" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
+              <div id="mole-word-3" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">ปู</div>
+              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
+                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/>
+                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/>
+                <circle cx="38" cy="40" r="7" fill="#fff"/>
+                <circle cx="38" cy="40" r="3" fill="#000"/>
+                <circle cx="62" cy="40" r="7" fill="#fff"/>
+                <circle cx="62" cy="40" r="3" fill="#000"/>
+                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
+                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hole 4 -->
+        <div class="relative w-full aspect-square flex items-center justify-center">
+          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
+          <div id="mole-container-4" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
+            <div id="mole-4" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
+              <div id="mole-word-4" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">มือ</div>
+              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
+                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/>
+                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/>
+                <circle cx="38" cy="40" r="7" fill="#fff"/>
+                <circle cx="38" cy="40" r="3" fill="#000"/>
+                <circle cx="62" cy="40" r="7" fill="#fff"/>
+                <circle cx="62" cy="40" r="3" fill="#000"/>
+                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
+                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hole 5 -->
+        <div class="relative w-full aspect-square flex items-center justify-center">
+          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
+          <div id="mole-container-5" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
+            <div id="mole-5" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
+              <div id="mole-word-5" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">เสือ</div>
+              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
+                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/>
+                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/>
+                <circle cx="38" cy="40" r="7" fill="#fff"/>
+                <circle cx="38" cy="40" r="3" fill="#000"/>
+                <circle cx="62" cy="40" r="7" fill="#fff"/>
+                <circle cx="62" cy="40" r="3" fill="#000"/>
+                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
+                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hole 6 -->
+        <div class="relative w-full aspect-square flex items-center justify-center">
+          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
+          <div id="mole-container-6" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
+            <div id="mole-6" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
+              <div id="mole-word-6" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">ดี</div>
+              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
+                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/>
+                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/>
+                <circle cx="38" cy="40" r="7" fill="#fff"/>
+                <circle cx="38" cy="40" r="3" fill="#000"/>
+                <circle cx="62" cy="40" r="7" fill="#fff"/>
+                <circle cx="62" cy="40" r="3" fill="#000"/>
+                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
+                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hole 7 -->
+        <div class="relative w-full aspect-square flex items-center justify-center">
+          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
+          <div id="mole-container-7" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
+            <div id="mole-7" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
+              <div id="mole-word-7" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">เรือ</div>
+              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
+                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/>
+                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/>
+                <circle cx="38" cy="40" r="7" fill="#fff"/>
+                <circle cx="38" cy="40" r="3" fill="#000"/>
+                <circle cx="62" cy="40" r="7" fill="#fff"/>
+                <circle cx="62" cy="40" r="3" fill="#000"/>
+                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
+                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hole 8 -->
+        <div class="relative w-full aspect-square flex items-center justify-center">
+          <div class="mole-hole w-[85%] h-[35%] rounded-[50%] absolute bottom-4 z-0"></div>
+          <div id="mole-container-8" class="absolute inset-x-0 bottom-4 top-0 overflow-hidden flex flex-col justify-end items-center">
+            <div id="mole-8" class="mole-entity translate-y-full transition-transform duration-200 cursor-pointer flex flex-col items-center select-none">
+              <div id="mole-word-8" class="bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors">สี</div>
+              <svg viewBox="0 0 100 80" class="w-16 sm:w-24 h-auto drop-shadow-lg">
+                <path d="M10,80 C10,15 90,15 90,80 Z" fill="#854d0e"/>
+                <path d="M30,80 C30,30 70,30 70,80 Z" fill="#a16207"/>
+                <circle cx="38" cy="40" r="7" fill="#fff"/>
+                <circle cx="38" cy="40" r="3" fill="#000"/>
+                <circle cx="62" cy="40" r="7" fill="#fff"/>
+                <circle cx="62" cy="40" r="3" fill="#000"/>
+                <ellipse cx="50" cy="52" rx="8" ry="5" fill="#f43f5e"/>
+                <line x1="25" y1="52" x2="10" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="25" y1="56" x2="12" y2="58" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="52" x2="90" y2="50" stroke="#fecdd3" stroke-width="2"/>
+                <line x1="75" y1="56" x2="88" y2="58" stroke="#fecdd3" stroke-width="2"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- CAMERA PREVIEW & HAND CURSORS OVERLAY -->
+      <div class="absolute inset-0 z-20 pointer-events-none">
+        
+        <!-- Webcam Preview Element (Small overlay in corner for reference) -->
+        <div class="absolute bottom-4 left-4 w-32 sm:w-40 aspect-video rounded-xl border-3 border-white/80 shadow-md overflow-hidden bg-black/60 pointer-events-auto flex items-center justify-center">
+          <!-- Hidden video element -->
+          <video id="webcam-video" class="w-full h-full object-cover transform -scale-x-100" autoplay playsinline muted></video>
+          <!-- Small overlay labels -->
+          <div class="absolute bottom-1 right-1 bg-black/60 text-[8px] text-white px-1 rounded font-mono">กล้อง</div>
+        </div>
+
+        <!-- AR Overlays (Generated hand tracking cursor representation) -->
+        <!-- Hand 1 (Left / Primary) -->
+        <div id="hammer-hand-0" class="hammer-cursor absolute left-1/2 top-1/2 w-16 sm:w-24 h-16 sm:h-24 opacity-0 transition-opacity z-50">
+          <!-- HAMMER GRAPHIC -->
+          <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-xl">
+            <!-- Handle -->
+            <rect x="15" y="55" width="50" height="14" rx="4" fill="#a16207" transform="rotate(45 40 60)"/>
+            <!-- Metal Head -->
+            <rect x="40" y="15" width="45" height="30" rx="6" fill="#64748b"/>
+            <!-- Red Strike Face -->
+            <rect x="80" y="18" width="8" height="24" rx="2" fill="#ef4444"/>
+            <!-- Grip details -->
+            <line x1="18" y1="78" x2="28" y2="68" stroke="#451a03" stroke-width="4"/>
+          </svg>
+        </div>
+
+        <!-- Hand 2 (Right / Secondary) -->
+        <div id="hammer-hand-1" class="hammer-cursor absolute left-1/2 top-1/2 w-16 sm:w-24 h-16 sm:h-24 opacity-0 transition-opacity z-50">
+          <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-xl">
+            <!-- Handle -->
+            <rect x="15" y="55" width="50" height="14" rx="4" fill="#a16207" transform="rotate(45 40 60)"/>
+            <!-- Metal Head -->
+            <rect x="40" y="15" width="45" height="30" rx="6" fill="#64748b"/>
+            <!-- Red Strike Face -->
+            <rect x="80" y="18" width="8" height="24" rx="2" fill="#ef4444"/>
+            <line x1="18" y1="78" x2="28" y2="68" stroke="#451a03" stroke-width="4"/>
+          </svg>
+        </div>
+
+      </div>
+
+      <!-- BOTTOM DECORATIVE GRASS (Foreground) -->
+      <div class="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-emerald-600 to-transparent pointer-events-none z-10"></div>
+    </div>
+
+    <!-- ==================== 3. GAME OVER SCREEN ==================== -->
+    <div id="game-over-screen" class="hidden absolute inset-0 z-40 bg-gradient-to-b from-slate-900/90 via-emerald-950/95 to-slate-900/90 flex flex-col items-center justify-center p-4 sm:p-8 text-center">
+      
+      <!-- Trophy Head Header -->
+      <div class="wooden-board text-white rounded-2xl px-8 py-4 max-w-xl bounce-ui mb-4">
+        <h2 class="text-[clamp(1.5rem,4vw,3rem)] font-extrabold tracking-wider text-yellow-300">
+          <i class="fa-solid fa-flag-checkered mr-2 text-white"></i>หมดเวลาแล้ว!
+        </h2>
+        <p id="score-evaluation" class="text-[clamp(0.85rem,1.8vw,1.3rem)] text-emerald-200 mt-1">
+          ยอดเยี่ยมมากน้องๆ สมองระบบย่อยอาหารของเราแข็งแรงสุดๆ!
+        </p>
+      </div>
+
+      <!-- Results Score Box -->
+      <div class="bg-white/95 border-4 border-yellow-400 rounded-3xl p-6 sm:p-8 shadow-2xl max-w-lg w-full mb-6">
+        <div class="text-slate-500 font-semibold text-sm sm:text-base uppercase tracking-wider mb-1">คะแนนรวมทั้งหมดของคุณคือ</div>
+        <div id="final-score" class="text-5xl sm:text-7xl font-black text-emerald-600 tracking-tight mb-4">250</div>
+        
+        <!-- Detailed metrics -->
+        <div class="grid grid-cols-2 gap-4 border-t-2 border-dashed border-slate-200 pt-4">
+          <div class="bg-emerald-50 rounded-xl p-3">
+            <span class="text-xs font-semibold text-emerald-800 block">ทุบถูกต้อง (แม่ ก กา)</span>
+            <span id="final-hits" class="text-xl sm:text-2xl font-bold text-emerald-600">25 ครั้ง</span>
+          </div>
+          <div class="bg-red-50 rounded-xl p-3">
+            <span class="text-xs font-semibold text-red-800 block">ทุบผิด (มีตัวสะกด)</span>
+            <span id="final-misses" class="text-xl sm:text-2xl font-bold text-red-600">3 ครั้ง</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Restart Button -->
+      <div>
+        <button id="btn-restart" class="wooden-btn text-white text-[clamp(1.2rem,2.5vw,1.8rem)] font-extrabold px-12 py-4 rounded-2xl flex items-center gap-3">
+          <i class="fa-solid fa-arrows-rotate"></i> เล่นอีกครั้ง!
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- FLOATING SCORE FEEDBACK LAYER -->
+  <div id="feedback-layer" class="fixed inset-0 pointer-events-none z-50"></div>
+
+  <!-- Hidden Canvas for Video Resolution Tracking & Math calculations if needed -->
+  <canvas id="hidden-math-canvas" width="640" height="480" class="hidden"></svg>
+
+  <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+  <script>
+    // --- 1. WORD DICTIONARIES ---
+    const KOKA_WORDS = [
+      "ปลา", "หมา", "ตา", "ขา", "ปู", "งู", "หู", "มือ", "เสือ", "เรือ", 
+      "ไก่", "นา", "ดี", "สี", "ผี", "ชา", "เก้าอี้", "มะลิ", "กะลา", "ยา"
+    ];
+
+    const SPELL_WORDS = [
+      "เดือน", "นก", "ปาก", "กิน", "ลม", "ฝน", "คน", "บ้าน", "นอน", "จาน", 
+      "แมว", "ช้าง", "ลิง", "เป็ด", "ปากกา", "มด", "กระดาษ", "ข้าว", "โรงเรียน", "น้ำ"
+    ];
+
+    // --- 2. GAME STATE ---
+    let gameState = 'initializing'; // 'initializing', 'ready', 'playing', 'ended'
+    let score = 0;
+    let timeRemaining = 60;
+    let timerInterval = null;
+    let moleInterval = null;
+    let totalHits = 0;
+    let totalMisses = 0;
+    
+    // Active states of 9 holes
+    const activeMoles = Array(9).fill(null).map(() => ({
+      active: false,
+      word: "",
+      isKoka: false,
+      hideTimeout: null,
+      element: null,
+      wordElement: null
+    }));
+
+    // Touch-alternative support (click/touch coordinates fallback for testing or non-cam devices)
+    let lastHandDetectedTime = 0;
+
+    // --- 3. AUDIO SYNTHESIZER (Web Audio API) ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playSound(type) {
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      const osc = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      osc.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      const now = audioCtx.currentTime;
+
+      if (type === 'hit-correct') {
+        // High cheery sound
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(587.33, now); // D5
+        osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
+        gainNode.gain.setValueAtTime(0.2, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if (type === 'hit-wrong') {
+        // Low buzzer sound
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(220, now); // A3
+        osc.frequency.exponentialRampToValueAtTime(110, now + 0.3); // A2
+        gainNode.gain.setValueAtTime(0.15, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        osc.start(now);
+        osc.stop(now + 0.35);
+      } else if (type === 'pop') {
+        // Quick upward sweep
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(500, now + 0.1);
+        gainNode.gain.setValueAtTime(0.1, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+        osc.start(now);
+        osc.stop(now + 0.12);
+      } else if (type === 'time-low') {
+        // Short high beep
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1000, now);
+        gainNode.gain.setValueAtTime(0.08, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+        osc.start(now);
+        osc.stop(now + 0.1);
+      } else if (type === 'game-over') {
+        // Majestic fanfare
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(523.25, now); // C5
+        osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+        osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+        osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.3); // C6
+        gainNode.gain.setValueAtTime(0.2, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+        osc.start(now);
+        osc.stop(now + 0.8);
+      }
+    }
+
+    // --- 4. MEDIAPIPE HAND TRACKING & WEBCAM ---
+    const videoElement = document.getElementById('webcam-video');
+    const hammerLeft = document.getElementById('hammer-hand-0');
+    const hammerRight = document.getElementById('hammer-hand-1');
+    const handWarning = document.getElementById('hand-lost-warning');
+
+    let isHandsLibraryLoaded = false;
+    let cameraInstance = null;
+
+    // Mapping normalized MediaPipe coordinates into responsive viewport coordinates inside game board
+    const gameContainer = document.querySelector('.relative.w-full.max-w-6xl');
+
+    function onResults(results) {
+      const now = Date.now();
+      
+      if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+        lastHandDetectedTime = now;
+        handWarning.style.opacity = '0'; // Hide warning
+
+        // Show/hide correct amount of hammer elements
+        const count = results.multiHandLandmarks.length;
+        if (count >= 1) {
+          hammerLeft.style.opacity = '1';
+          positionHammer(hammerLeft, results.multiHandLandmarks[0]);
+          checkCollision(results.multiHandLandmarks[0], 0);
+        } else {
+          hammerLeft.style.opacity = '0';
+        }
+
+        if (count >= 2) {
+          hammerRight.style.opacity = '1';
+          positionHammer(hammerRight, results.multiHandLandmarks[1]);
+          checkCollision(results.multiHandLandmarks[1], 1);
+        } else {
+          hammerRight.style.opacity = '0';
+        }
+      } else {
+        // No hands seen
+        hammerLeft.style.opacity = '0';
+        hammerRight.style.opacity = '0';
+        
+        if (gameState === 'playing' && (now - lastHandDetectedTime > 1500)) {
+          handWarning.style.opacity = '1'; // Show warning if hand gone > 1.5s
+        }
+      }
+    }
+
+    // Positions hammer at pointer (index finger tip is landmark 8)
+    function positionHammer(hammerElement, landmarks) {
+      // Landmark 8 is Index Finger Tip
+      const indexTip = landmarks[8];
+      
+      // Convert normalized MediaPipe coordinate (0-1) to container dimension coordinates
+      // Since video is mirrored visually, we mirror the tracking coordinates on x-axis
+      const x = (1 - indexTip.x) * 100; // Percent width
+      const y = indexTip.y * 100;       // Percent height
+
+      hammerElement.style.left = `${x}%`;
+      hammerElement.style.top = `${y}%`;
+    }
+
+    // Collision detection: check if index finger is over any active mole
+    const moleTriggerCooldown = Array(9).fill(0); // Cooldown for hits to prevent multi-hit spikes
+
+    function checkCollision(landmarks, handIndex) {
+      if (gameState !== 'playing') return;
+
+      const now = Date.now();
+      const indexTip = landmarks[8];
+      
+      // Mirror X coordinates
+      const xPercent = (1 - indexTip.x) * 100;
+      const yPercent = indexTip.y * 100;
+
+      // Iterate and check all 9 holes
+      for (let i = 0; i < 9; i++) {
+        if (!activeMoles[i].active) continue;
+        if (now - moleTriggerCooldown[i] < 600) continue; // Cool down to avoid accidental rapid triggers
+
+        // Find actual pixel bounds of target hole
+        const holeContainer = document.getElementById(`mole-container-${i}`);
+        if (!holeContainer) continue;
+
+        const bounds = holeContainer.getBoundingClientRect();
+        const parentBounds = gameContainer.getBoundingClientRect();
+
+        // Convert DOM bounds to percentage within main game container
+        const holeLeft = ((bounds.left - parentBounds.left) / parentBounds.width) * 100;
+        const holeRight = ((bounds.right - parentBounds.left) / parentBounds.width) * 100;
+        const holeTop = ((bounds.top - parentBounds.top) / parentBounds.height) * 100;
+        const holeBottom = ((bounds.bottom - parentBounds.top) / parentBounds.height) * 100;
+
+        // Expanded strike radius for kid-friendly interaction
+        const paddingX = 4;
+        const paddingY = 4;
+
+        if (
+          xPercent >= (holeLeft - paddingX) && 
+          xPercent <= (holeRight + paddingX) &&
+          yPercent >= (holeTop - paddingY) && 
+          yPercent <= (holeBottom + paddingY)
+        ) {
+          // HIT CONFIRMED
+          moleTriggerCooldown[i] = now;
+          triggerHammerStrikeAnimation(handIndex);
+          whackMole(i);
+        }
+      }
+    }
+
+    // Trigger visual hammer swinging
+    function triggerHammerStrikeAnimation(handIndex) {
+      const hammer = handIndex === 0 ? hammerLeft : hammerRight;
+      hammer.classList.add('hammer-strike');
+      setTimeout(() => {
+        hammer.classList.remove('hammer-strike');
+      }, 150);
+    }
+
+    // Init MediaPipe Hands Settings
+    const hands = new Hands({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
+
+    hands.setOptions({
+      maxNumHands: 2,
+      modelComplexity: 0, // Lightweight for lower-end machines
+      minDetectionConfidence: 0.5,
+      minTrackingConfidence: 0.5
+    });
+
+    hands.onResults(onResults);
+
+    // Initialize Camera Feed
+    async function initCamera() {
+      const statusLabel = document.getElementById('camera-loading-status');
+      const startBtn = document.getElementById('btn-start');
+      
+      try {
+        cameraInstance = new Camera(videoElement, {
+          onFrame: async () => {
+            await hands.send({ image: videoElement });
+          },
+          width: 640,
+          height: 480
+        });
+
+        await cameraInstance.start();
+        gameState = 'ready';
+        statusLabel.innerHTML = `<span class="text-green-400 font-bold"><i class="fa-solid fa-circle-check"></i> กล้องพร้อมใช้งานแล้ว!</span>`;
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      } catch (err) {
+        console.error("Camera initialize error: ", err);
+        statusLabel.innerHTML = `<span class="text-amber-300"><i class="fa-solid fa-exclamation-triangle"></i> อุปกรณ์ไม่พบบนเว็บแคม หรือเบราว์เซอร์ไม่ได้รับอนุญาตสิทธิ์กล้อง</span>`;
+        // Allow starting the game anyway with click simulation
+        gameState = 'ready';
+        startBtn.disabled = false;
+        startBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+      }
+    }
+
+    // --- 5. GAME ENGINE CORE LOGIC ---
+
+    // Cache elements
+    for (let i = 0; i < 9; i++) {
+      activeMoles[i].element = document.getElementById(`mole-${i}`);
+      activeMoles[i].wordElement = document.getElementById(`mole-word-${i}`);
+    }
+
+    // Generate Floating Point Effects
+    function triggerScorePop(holeIndex, isCorrect, valueText) {
+      const parent = gameContainer;
+      const hole = document.getElementById(`mole-container-${holeIndex}`);
+      if (!hole) return;
+
+      const hBounds = hole.getBoundingClientRect();
+      const pBounds = parent.getBoundingClientRect();
+
+      // Find relative X,Y
+      const relativeX = hBounds.left + hBounds.width / 2 - pBounds.left;
+      const relativeY = hBounds.top + hBounds.height / 3 - pBounds.top;
+
+      const popEl = document.createElement('div');
+      popEl.className = `absolute z-50 font-extrabold text-3xl sm:text-5xl floating-score select-none pointer-events-none drop-shadow-lg`;
+      popEl.style.left = `${relativeX}px`;
+      popEl.style.top = `${relativeY}px`;
+      
+      if (isCorrect) {
+        popEl.innerHTML = `<span class="text-emerald-500 font-black">+${valueText}</span>`;
+      } else {
+        popEl.innerHTML = `<span class="text-red-500 font-black">${valueText}</span>`;
+      }
+
+      parent.appendChild(popEl);
+      setTimeout(() => popEl.remove(), 800);
+    }
+
+    // Trigger mole popping up
+    function spawnMole() {
+      if (gameState !== 'playing') return;
+
+      // Find all idle holes
+      const idleHoles = [];
+      for (let i = 0; i < 9; i++) {
+        if (!activeMoles[i].active) idleHoles.push(i);
+      }
+
+      if (idleHoles.length === 0) return;
+
+      // Select random hole
+      const randomHole = idleHoles[Math.floor(Math.random() * idleHoles.length)];
+      const mole = activeMoles[randomHole];
+
+      // Decide if it's Kokaa (55% probability) or Spelled word (45%)
+      const isKoka = Math.random() < 0.55;
+      const wordSource = isKoka ? KOKA_WORDS : SPELL_WORDS;
+      const selectedWord = wordSource[Math.floor(Math.random() * wordSource.length)];
+
+      mole.active = true;
+      mole.word = selectedWord;
+      mole.isKoka = isKoka;
+
+      // Apply initial styling to word tag
+      mole.wordElement.textContent = selectedWord;
+      mole.wordElement.className = "bg-white text-slate-800 border-3 border-amber-800 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center transition-colors";
+
+      // Animate Pop up
+      mole.element.style.transform = "translateY(0%)";
+      playSound('pop');
+
+      // Adaptive timings based on remaining clock (harder as time runs low)
+      let displayDuration = 1800; // Default slow pop
+      if (timeRemaining < 20) {
+        displayDuration = 1000;  // Ultra fast
+      } else if (timeRemaining < 40) {
+        displayDuration = 1400;  // Medium
+      }
+
+      // Automatically hide mole after delay if not hit
+      mole.hideTimeout = setTimeout(() => {
+        hideMole(randomHole);
+      }, displayDuration);
+    }
+
+    // Clear and hide mole
+    function hideMole(index) {
+      const mole = activeMoles[index];
+      if (!mole) return;
+
+      mole.element.style.transform = "translateY(100%)";
+      mole.active = false;
+      if (mole.hideTimeout) {
+        clearTimeout(mole.hideTimeout);
+        mole.hideTimeout = null;
+      }
+    }
+
+    // Action of whacking a mole
+    function whackMole(index) {
+      const mole = activeMoles[index];
+      if (!mole || !mole.active) return;
+
+      const word = mole.word;
+      const isCorrect = mole.isKoka;
+
+      // Disable active state so it cannot be hit multiple times
+      mole.active = false;
+      if (mole.hideTimeout) {
+        clearTimeout(mole.hideTimeout);
+        mole.hideTimeout = null;
+      }
+
+      // Sound and Score visual Feedback
+      if (isCorrect) {
+        score += 10;
+        totalHits++;
+        playSound('hit-correct');
+        mole.wordElement.className = "bg-emerald-500 text-white border-3 border-emerald-700 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center";
+        triggerScorePop(index, true, "10");
+      } else {
+        score = Math.max(0, score - 5); // Score floors at 0
+        totalMisses++;
+        playSound('hit-wrong');
+        mole.wordElement.className = "bg-red-500 text-white border-3 border-red-700 font-extrabold text-sm sm:text-xl px-3 py-1 rounded-xl shadow-md whitespace-nowrap mb-1 max-w-[90%] text-center animate-shake";
+        triggerScorePop(index, false, "-5");
+      }
+
+      // Update HUD
+      document.getElementById('hud-score').textContent = String(score).padStart(3, '0');
+
+      // Fall back / Hide mole instantly inside ground
+      setTimeout(() => {
+        mole.element.style.transform = "translateY(100%)";
+      }, 300);
+    }
+
+    // Game loop timers
+    function startGameTimers() {
+      // Game Countdown Clock
+      timerInterval = setInterval(() => {
+        timeRemaining--;
+        const timerEl = document.getElementById('hud-timer');
+        const timerIcon = document.getElementById('timer-icon');
+        
+        timerEl.textContent = `${timeRemaining}s`;
+
+        // 10-second warnings (blink and audio beeps)
+        if (timeRemaining <= 10) {
+          timerEl.classList.add('text-red-500', 'pulse-time-limit');
+          timerIcon.classList.add('text-red-500', 'animate-pulse');
+          playSound('time-low');
+        } else {
+          timerEl.classList.remove('text-red-500', 'pulse-time-limit');
+          timerIcon.classList.remove('text-red-500', 'animate-pulse');
+        }
+
+        if (timeRemaining <= 0) {
+          endGame();
+        }
+      }, 1000);
+
+      // Mole Spawning Interval (Increases density as clock runs down)
+      function spawnManager() {
+        if (gameState !== 'playing') return;
+
+        spawnMole();
+
+        // Dynamically compute next delay to increase difficulty
+        let nextSpawnDelay = 1200;
+        if (timeRemaining < 20) {
+          nextSpawnDelay = 600;  // High frequency spawning
+        } else if (timeRemaining < 40) {
+          nextSpawnDelay = 900;  // Medium frequency
+        }
+
+        moleInterval = setTimeout(spawnManager, nextSpawnDelay);
+      }
+
+      // Trigger initial loop
+      moleInterval = setTimeout(spawnManager, 800);
+    }
+
+    // Start Game
+    function startGame() {
+      // Re-enable audio context (Browser security requirements)
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      gameState = 'playing';
+      score = 0;
+      timeRemaining = 60;
+      totalHits = 0;
+      totalMisses = 0;
+
+      // Update HUD displays
+      document.getElementById('hud-score').textContent = "000";
+      document.getElementById('hud-timer').textContent = "60s";
+
+      // Hide start screen and show gameplay
+      document.getElementById('start-screen').classList.add('hidden');
+      document.getElementById('gameplay-screen').classList.remove('hidden');
+      document.getElementById('game-over-screen').classList.add('hidden');
+
+      startGameTimers();
+    }
+
+    // End Game
+    function endGame() {
+      gameState = 'ended';
+      playSound('game-over');
+
+      // Clear timers
+      clearInterval(timerInterval);
+      clearTimeout(moleInterval);
+
+      // Force-hide all moles
+      for (let i = 0; i < 9; i++) {
+        hideMole(i);
+      }
+
+      // Populate final analytics screen
+      document.getElementById('final-score').textContent = score;
+      document.getElementById('final-hits').textContent = `${totalHits} ครั้ง`;
+      document.getElementById('final-misses').textContent = `${totalMisses} ครั้ง`;
+
+      // Custom evaluation text
+      const evalText = document.getElementById('score-evaluation');
+      if (score >= 200) {
+        evalText.innerHTML = `<span class="text-yellow-400"><i class="fa-solid fa-medal mr-1"></i>สุดยอดอัจฉริยะ!</span> แชมป์เปี้ยนตัวต่อวิทยากรแยกแยะหลักภาษาตัวจริง!`;
+      } else if (score >= 100) {
+        evalText.innerHTML = `<span class="text-green-300"><i class="fa-solid fa-thumbs-up mr-1"></i>เก่งมากเลย!</span> เด็กๆ มีความเข้าใจหลักการผันคำแม่ ก กา ที่ดีเยี่ยม!`;
+      } else {
+        evalText.innerHTML = `เก่งมากที่พยายาม! มาเล่นบ่อยๆ เพื่อพัฒนาภาษาไทยของเราให้แข็งแรงขึ้นกันนะ`;
+      }
+
+      // Show screens
+      document.getElementById('gameplay-screen').classList.add('hidden');
+      document.getElementById('game-over-screen').classList.remove('hidden');
+    }
+
+    // --- 6. INTERACTIVE EVENT HANDLERS & FALLBACKS ---
+
+    // Click on Mole Fallback (For testing & systems without camera)
+    for (let i = 0; i < 9; i++) {
+      const container = document.getElementById(`mole-container-${i}`);
+      container.addEventListener('mousedown', (e) => {
+        if (gameState === 'playing') {
+          whackMole(i);
+        }
+      });
+      container.addEventListener('touchstart', (e) => {
+        if (gameState === 'playing') {
+          e.preventDefault(); // Stop double trigger on mobile tap
+          whackMole(i);
+        }
+      });
+    }
+
+    // Setup interactive Buttons
+    document.getElementById('btn-start').addEventListener('click', () => {
+      startGame();
+    });
+
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      startGame();
+    });
+
+    // Window Init Hook
+    window.onload = function() {
+      initCamera();
+    }
+  </script>
+</body>
+</html>
